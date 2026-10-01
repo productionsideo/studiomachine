@@ -183,13 +183,18 @@ class Mediatheque
     }
 
     /** Largeur, hauteur et durée, selon ffprobe. Vide si ffprobe est absent. */
-    private function sonder(string $chemin): array
+    public function sonder(string $chemin): array
     {
+        // Sortie complète plutôt qu'une sélection de champs : le serveur a
+        // ffprobe 4.4, qui refuse les sections récentes (stream_side_data)
+        // et faisait alors échouer toute l'analyse. -show_streams marche
+        // partout ; on cherche la rotation aux deux endroits possibles.
         $process = new Process([
             config('publication.medias.ffprobe'),
             '-v', 'error',
             '-select_streams', 'v:0',
-            '-show_entries', 'stream=width,height:stream_side_data=rotation:format=duration',
+            '-show_streams',
+            '-show_format',
             '-of', 'json',
             $chemin,
         ]);
@@ -200,50 +205,33 @@ class Mediatheque
             return [];
         }
 
-        $json   = json_decode($process->getOutput(), true) ?? [];
-        $flux   = $json['streams'][0] ?? [];
+        $json    = json_decode($process->getOutput(), true) ?? [];
+        $flux    = $json['streams'][0] ?? [];
         $largeur = $flux['width'] ?? null;
         $hauteur = $flux['height'] ?? null;
 
         // Un téléphone filme souvent « couché » avec une consigne de rotation :
         // la vidéo s'affiche verticale mais ses dimensions brutes disent
         // l'inverse. Sans ce redressement, un Reel 9:16 passerait pour du 16:9.
-        $rotation = abs((int) ($flux['side_data_list'][0]['rotation'] ?? 0));
+        // ffprobe récent la range dans side_data_list, l'ancien dans tags.rotate.
+        $rotation = (int) ($flux['tags']['rotate'] ?? 0);
+        foreach ($flux['side_data_list'] ?? [] as $donnee) {
+            if (isset($donnee['rotation'])) {
+                $rotation = (int) $donnee['rotation'];
+            }
+        }
+        $rotation = abs($rotation) % 360;
         if ($rotation === 90 || $rotation === 270) {
             [$largeur, $hauteur] = [$hauteur, $largeur];
         }
 
+        $duree = $json['format']['duration'] ?? $flux['duration'] ?? null;
+
         return [
             'width'    => $largeur,
             'height'   => $hauteur,
-            'duration' => isset($json['format']['duration']) ? round((float) $json['format']['duration'], 2) : null,
+            'duration' => $duree !== null ? round((float) $duree, 2) : null,
         ];
-    }
-
-    private function versJpeg(string $source): string
-    {
-        $cible = $source . '.jpg';
-
-        $process = new Process([
-            config('publication.medias.ffmpeg'),
-            '-v', 'error',
-            '-i', $source,
-            // Fond blanc sous la transparence, plutôt que le noir par défaut.
-            '-filter_complex', 'color=white[f];[f][0:v]scale2ref[f][i];[f][i]overlay=shortest=1,format=yuvj420p',
-            '-frames:v', '1',
-            '-q:v', '2',
-            '-y', $cible,
-        ]);
-        $process->setTimeout(60);
-        $process->run();
-
-        if (! $process->isSuccessful() || ! is_file($cible)) {
-            throw new \RuntimeException('Conversion de l’image en JPEG impossible : ' . trim($process->getErrorOutput()));
-        }
-
-        @unlink($source);
-
-        return $cible;
     }
 
     /** Une image tirée de la vidéo, pour la médiathèque et le calendrier. */
