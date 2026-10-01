@@ -53,6 +53,12 @@ class MediasR2Test extends TestCase
 
         Http::fake(['compte123.r2.cloudflarestorage.com/*' => function (Request $r) {
             $url = parse_url($r->url());
+
+            // Un en-tête signé envoyé en double (« a, a ») casse la signature.
+            foreach ($r->headers() as $nom => $valeurs) {
+                $this->assertCount(1, $valeurs, "En-tête {$nom} envoyé plusieurs fois à R2");
+            }
+
             $this->appels[] = $r->method() . ' ' . $url['path'] . (isset($url['query']) ? '?' . $url['query'] : '');
 
             return match (true) {

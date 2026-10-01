@@ -183,12 +183,20 @@ class R2
 
         $url = 'https://' . $hote . $chemin . ($query ? '?' . self::requeteCanonique($query) : '');
 
+        // Avec un corps, le type part par withBody() seulement : passé aussi
+        // dans withHeaders(), Guzzle l'enverrait deux fois (« a, a ») et la
+        // signature ne correspondrait plus.
+        $type = $entetes['content-type'] ?? 'application/octet-stream';
+        if ($corps !== null) {
+            unset($entetes['content-type']);
+        }
+
         $client = Http::timeout($timeout)->withHeaders($entetes);
         if ($sink) {
             $client = $client->sink($sink);
         }
         if ($corps !== null) {
-            $client = $client->withBody($corps, $entetes['content-type'] ?? 'application/octet-stream');
+            $client = $client->withBody($corps, $type);
         }
 
         return $client->send($methode, $url);
