@@ -11,6 +11,7 @@ Dashboard client de Studio Machine (Laravel 13, PHP 8.5), en ligne sur
 - **Assistant Claude** : tri et brouillons de réponse, validation humaine.
 - **Intégrations** : comptes Analytics et réseaux sociaux par client.
 - **Clients et accès** : multi-client, rôles admin / client.
+- **Analytique (GA4)** : trafic par source, campagnes, achats et clics vers Amazon, collectés toutes les 3 heures par compte de service (`ga4:synchroniser`).
 - **Publication** : calendrier, campagnes, médiathèque, programmation sur Facebook, Instagram, YouTube et TikTok — voir [PUBLICATION.md](PUBLICATION.md).
 
 ## Déploiement (cPanel, compte `studiomachine`)

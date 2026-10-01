@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnalytiqueController;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CalendrierController;
@@ -81,6 +82,11 @@ Route::middleware('auth')->group(function () {
             ->middleware('throttle:300,1')->name('medias.morceau');
         Route::delete('/medias/{media}',        [MediaController::class, 'destroy'])->name('medias.destroy');
     });
+
+    // Google Analytics 4 (copie locale, collectée toutes les 3 heures)
+    Route::get('/analytique', [AnalytiqueController::class, 'index'])->name('analytique.index');
+    Route::post('/integrations/{integration}/ga4', [AnalytiqueController::class, 'collecter'])
+        ->middleware('throttle:6,1')->name('analytique.collecter');
 
     // Publication — consulter : l'équipe et les clients.
     Route::get('/calendrier',             [CalendrierController::class, 'index'])->name('calendrier.index');

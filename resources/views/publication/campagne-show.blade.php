@@ -39,6 +39,35 @@
         <div class="note">demandes ÷ visites</div></div>
 </div>
 
+@if($ga4)
+    <div class="panneau" style="margin-bottom:16px">
+        <h2>Google Analytics 4
+            <span class="aide">
+                {{ number_format((float) $ga4['totaux']->s, 0, ',', ' ') }} sessions ·
+                {{ $ga4['clics'] }} clics vers Amazon ·
+                {{ (int) $ga4['totaux']->a }} achats{{ $ga4['totaux']->r > 0 ? ' · ' . number_format($ga4['totaux']->r, 2, ',', ' ') . ' $' : '' }}
+            </span>
+        </h2>
+        <div class="tableau-cadre">
+            <table>
+                <thead><tr><th>Source / support</th><th class="num">Sessions</th><th class="num">Clics Amazon</th><th class="num">Achats</th></tr></thead>
+                <tbody>
+                @forelse($ga4['parSource'] as $l)
+                    <tr>
+                        <td>{{ $l->source }} <span style="color:var(--encre-3)">/ {{ $l->support }}</span></td>
+                        <td class="num">{{ number_format($l->s, 0, ',', ' ') }}</td>
+                        <td class="num">{{ $ga4['clicsParSource'][$l->source] ?? 0 }}</td>
+                        <td class="num">{{ $l->a }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="vide">GA4 n’a encore vu aucune visite portant le code <code>{{ $campaign->utm_campaign }}</code>.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
+
 <div class="panneau">
     <h2>Publications</h2>
     <div class="tableau-cadre">

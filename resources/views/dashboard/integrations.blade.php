@@ -85,6 +85,14 @@
             <div style="margin-top:16px">
                 @if($branchee)
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        @if($cle === 'ga4')
+                            <form method="post" action="{{ route('analytique.collecter', $branchee) }}">
+                                @csrf
+                                <button type="submit" class="bouton bouton-accent">
+                                    {{ $branchee->last_synced_at ? 'Collecter maintenant' : 'Collecter maintenant (90 derniers jours)' }}
+                                </button>
+                            </form>
+                        @endif
                         @if($p['mode'] === 'oauth' && $configuree)
                             <a href="{{ route('connexion.rediriger', [$client, $fournisseur]) }}" class="bouton-fin">Reconnecter</a>
                         @endif

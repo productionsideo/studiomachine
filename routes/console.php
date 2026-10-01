@@ -19,3 +19,10 @@ Schedule::command('social:synchroniser')
     ->everyFifteenMinutes()
     ->withoutOverlapping(30)
     ->appendOutputTo(storage_path('logs/social.log'));
+
+// Google Analytics 4 : toutes les 3 heures, les 3 derniers jours (GA4
+// corrige ses chiffres pendant environ 48 h).
+Schedule::command('ga4:synchroniser')
+    ->everyThreeHours()
+    ->withoutOverlapping(60)
+    ->appendOutputTo(storage_path('logs/ga4.log'));

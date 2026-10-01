@@ -45,6 +45,11 @@
 
             <div class="rail-sep">Suivi</div>
             @if($c || ! auth()->user()->isAdmin())
+                <a href="{{ route('analytique.index', $q) }}" @class(['on' => request()->routeIs('analytique.*')])>
+                    Analytique
+                </a>
+            @endif
+            @if($c || ! auth()->user()->isAdmin())
                 <a href="{{ route('capsules.index', $q) }}" @class(['on' => request()->routeIs('capsules.*')])>
                     Capsules
                 </a>

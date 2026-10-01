@@ -69,7 +69,24 @@ class CampaignController extends Controller
             ->groupBy('source')
             ->pluck('n', 'source');
 
-        return view('publication.campagne-show', compact('campaign', 'posts', 'visites', 'demandes', 'parReseau'));
+        // Google Analytics 4, si le client est branché : la même campagne vue
+        // par GA4 (achats, clics vers Amazon), par source / support.
+        $ga4 = null;
+        if ($campaign->client->integrations()->where('platform', 'ga4')->whereNotNull('last_synced_at')->exists()) {
+            $trafic = \Illuminate\Support\Facades\DB::table('ga4_trafic')
+                ->where('client_id', $campaign->client_id)->where('campagne', $campaign->utm_campaign);
+            $clics = \Illuminate\Support\Facades\DB::table('ga4_evenements')
+                ->where('client_id', $campaign->client_id)->where('campagne', $campaign->utm_campaign)->where('evenement', 'clic_amazon');
+
+            $ga4 = [
+                'totaux'    => (clone $trafic)->selectRaw('sum(sessions) s, sum(sessions_engagees) e, sum(achats) a, sum(revenus) r')->first(),
+                'clics'     => (int) (clone $clics)->sum('nombre'),
+                'parSource' => (clone $trafic)->selectRaw('source, support, sum(sessions) s, sum(achats) a')->groupBy('source', 'support')->orderByDesc('s')->get(),
+                'clicsParSource' => (clone $clics)->selectRaw('source, sum(nombre) n')->groupBy('source')->pluck('n', 'source'),
+            ];
+        }
+
+        return view('publication.campagne-show', compact('campaign', 'posts', 'visites', 'demandes', 'parReseau', 'ga4'));
     }
 
     public function create(Request $request)
