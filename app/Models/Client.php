@@ -32,6 +32,9 @@ class Client extends Model
     public function leads()          { return $this->hasMany(Lead::class); }
     public function integrations()   { return $this->hasMany(Integration::class); }
     public function socialComments() { return $this->hasMany(SocialComment::class); }
+    public function campaigns()      { return $this->hasMany(Campaign::class); }
+    public function posts()          { return $this->hasMany(Post::class); }
+    public function mediaAssets()    { return $this->hasMany(MediaAsset::class); }
 
     /**
      * Fabrique une clé API, la stocke hachée et retourne la version en clair.

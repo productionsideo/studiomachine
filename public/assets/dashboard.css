@@ -325,3 +325,146 @@ textarea { min-height: 90px; resize: vertical; }
     .rail-user { display: none; }
     .vue { padding: 20px 16px 50px; }
 }
+
+/* =====================================================================
+   Publication : calendrier, éditeur, médiathèque
+   ===================================================================== */
+
+.pastille-brouillon  { background: var(--fond); color: var(--encre-3); }
+.pastille-programmee { background: #eef4ff; color: #1d4ed8; border-color: #d6e3ff; }
+.pastille-en_cours, .pastille-en_attente { background: #fff7e6; color: var(--alerte); border-color: #fde8c3; }
+.pastille-publiee    { background: #e9f7f0; color: var(--ok); border-color: #c9ecdb; }
+.pastille-partielle  { background: #fff7e6; color: var(--alerte); border-color: #fde8c3; }
+.pastille-echec      { background: var(--accent-pale); color: var(--accent); border-color: #f4d3d7; }
+.pastille-annulee    { background: var(--fond); color: var(--encre-3); text-decoration: line-through; }
+
+/* ---------- Calendrier ---------- */
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-entete {
+    font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--encre-3); padding: 10px 10px; border-bottom: 1px solid var(--trait);
+}
+.cal-jour {
+    min-height: 118px; padding: 6px 6px 8px;
+    border-right: 1px solid var(--trait); border-bottom: 1px solid var(--trait);
+    display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+.cal-jour:nth-child(7n) { border-right: 0; }
+.cal-jour.hors { background: var(--fond); }
+.cal-jour.hors .cal-num { color: #b7bcc5; }
+.cal-tete-jour { display: flex; justify-content: space-between; align-items: center; }
+.cal-num { font-size: 13px; font-weight: 600; color: var(--encre-2); padding: 2px 4px; }
+.cal-jour.auj .cal-num { background: var(--accent); color: #fff; border-radius: 6px; }
+.cal-ajout {
+    opacity: 0; font-size: 16px; line-height: 1; color: var(--encre-3);
+    padding: 0 5px; border-radius: 5px;
+}
+.cal-jour:hover .cal-ajout { opacity: 1; }
+.cal-ajout:hover { background: var(--fond); color: var(--accent); }
+.cal-item {
+    display: block; font-size: 12px; line-height: 1.3;
+    background: var(--surface); border: 1px solid var(--trait);
+    border-left: 3px solid var(--couleur, var(--encre-3));
+    border-radius: 6px; padding: 4px 6px;
+    overflow: hidden;
+}
+.cal-item:hover { border-color: var(--encre-3); border-left-color: var(--couleur, var(--encre-3)); }
+.cal-item .h { font-weight: 650; font-variant-numeric: tabular-nums; }
+.cal-item .t { color: var(--encre-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.cal-item .pts { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle; }
+.cal-item.echec { background: var(--accent-pale); }
+.cal-item.publiee { opacity: .75; }
+@media (max-width: 900px) {
+    .cal { grid-template-columns: 1fr; }
+    .cal-entete { display: none; }
+    .cal-jour { min-height: 0; border-right: 0; }
+    .cal-jour.hors { display: none; }
+}
+
+/* ---------- Éditeur de publication ---------- */
+.editeur { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 1100px) { .editeur { grid-template-columns: 1fr; } }
+.editeur-apercu { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px; }
+.rangee { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .rangee { grid-template-columns: 1fr; } }
+input[type=date], input[type=time], input[type=color] {
+    padding: 8px 10px; border: 1px solid var(--trait); border-radius: 7px;
+    font: inherit; font-size: 14px; background: var(--surface); color: var(--encre); width: 100%;
+}
+input[type=color] { padding: 3px; height: 38px; }
+.compteur { font-size: 12px; color: var(--encre-3); text-align: right; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.compteur.trop { color: var(--accent); font-weight: 600; }
+.aide-champ { font-size: 12px; color: var(--encre-3); margin-top: 4px; }
+
+.reseau-bloc { border: 1px solid var(--trait); border-radius: 8px; margin-bottom: 10px; }
+.reseau-bloc > .reseau-tete {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer;
+    font-size: 14px; font-weight: 600; margin: 0;
+}
+.reseau-tete input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); }
+.reseau-tete .compte { font-weight: 400; color: var(--encre-3); font-size: 13px; margin-left: auto; }
+.reseau-corps { padding: 4px 12px 12px 38px; display: none; }
+.reseau-bloc.actif { border-color: var(--encre-3); }
+.reseau-bloc.actif .reseau-corps { display: block; }
+.reseau-bloc.inactif { opacity: .6; }
+.coches { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 12px; }
+.coches label { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 0; font-size: 14px; }
+.coches input { accent-color: var(--accent); }
+.coches label.grise { color: var(--encre-3); }
+
+.choix-medias { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.vignette {
+    position: relative; aspect-ratio: 1; border-radius: 7px; overflow: hidden;
+    background: var(--fond); border: 2px solid transparent; cursor: pointer;
+}
+.vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vignette .badge {
+    position: absolute; left: 4px; bottom: 4px; background: rgba(20,22,26,.78); color: #fff;
+    font-size: 10px; padding: 1px 5px; border-radius: 4px; font-variant-numeric: tabular-nums;
+}
+.vignette .ordre {
+    position: absolute; right: 4px; top: 4px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+    display: none; place-items: center;
+}
+.vignette.choisie { border-color: var(--accent); }
+.vignette.choisie .ordre { display: grid; }
+.vignette .sans { display: grid; place-items: center; height: 100%; font-size: 11px; color: var(--encre-3); }
+
+.depot {
+    border: 1.5px dashed var(--trait); border-radius: 8px; padding: 16px;
+    text-align: center; color: var(--encre-3); font-size: 13px; cursor: pointer;
+}
+.depot.survol { border-color: var(--accent); background: var(--accent-pale); color: var(--accent); }
+.envoi-ligne { font-size: 12px; margin-top: 8px; text-align: left; }
+.envoi-ligne .jauge-rail { margin-top: 3px; }
+
+.apercu {
+    background: var(--surface); border: 1px solid var(--trait); border-radius: 12px;
+    overflow: hidden; box-shadow: var(--ombre); font-size: 13px;
+}
+.apercu-tete { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-weight: 600; }
+.apercu-media { background: #0d0e10; aspect-ratio: 4/5; display: grid; place-items: center; color: #6b7280; }
+.apercu-media img { width: 100%; height: 100%; object-fit: cover; }
+.apercu-media.vertical { aspect-ratio: 9/16; max-height: 420px; }
+.apercu-texte { padding: 10px 12px 14px; white-space: pre-wrap; word-break: break-word; color: var(--encre-2); max-height: 160px; overflow: hidden; }
+.onglets { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.barre-actions {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 14px 18px; border-top: 1px solid var(--trait); background: var(--fond);
+}
+.barre-actions .espace { flex: 1; }
+
+/* ---------- Médiathèque ---------- */
+.galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.galerie-carte {
+    background: var(--surface); border: 1px solid var(--trait); border-radius: var(--rayon);
+    overflow: hidden; box-shadow: var(--ombre); display: flex; flex-direction: column;
+}
+.galerie-carte .vignette { border-radius: 0; border: 0; cursor: default; }
+.galerie-carte .infos { padding: 8px 10px; font-size: 12px; color: var(--encre-3); }
+.galerie-carte .infos strong { display: block; color: var(--encre); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.galerie-carte form { padding: 0 10px 10px; }
+
+.pastille-couleur { width: 10px; height: 10px; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 6px; }

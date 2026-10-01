@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Toute l'interface est en français : les dates aussi (« mardi 6 octobre »).
+        \Illuminate\Support\Carbon::setLocale('fr');
     }
 }

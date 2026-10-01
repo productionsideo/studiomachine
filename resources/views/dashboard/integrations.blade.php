@@ -21,6 +21,7 @@
     @php
         $branchee    = $branchees[$cle] ?? null;
         $configuree  = in_array($cle, $configurees, true);
+        $fournisseur = match ($cle) { 'facebook', 'instagram' => 'meta', default => $cle };
     @endphp
 
     <div class="panneau" style="margin-bottom:16px">
@@ -83,11 +84,16 @@
 
             <div style="margin-top:16px">
                 @if($branchee)
-                    <form method="post" action="{{ route('integrations.destroy', $branchee) }}"
-                          onsubmit="return confirm('Déconnecter ce compte ? Les statistiques déjà collectées restent en place.')">
-                        @csrf @method('delete')
-                        <button type="submit" class="bouton-fin">Déconnecter</button>
-                    </form>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        @if($p['mode'] === 'oauth' && $configuree)
+                            <a href="{{ route('connexion.rediriger', [$client, $fournisseur]) }}" class="bouton-fin">Reconnecter</a>
+                        @endif
+                        <form method="post" action="{{ route('integrations.destroy', $branchee) }}"
+                              onsubmit="return confirm('Déconnecter ce compte ? Les statistiques déjà collectées restent en place.')">
+                            @csrf @method('delete')
+                            <button type="submit" class="bouton-fin">Déconnecter</button>
+                        </form>
+                    </div>
 
                 @elseif($p['mode'] === 'compte_service')
                     {{-- GA4 : pas d'OAuth, un compte de service suffit --}}
@@ -133,9 +139,14 @@
                         @endif
                     </div>
                 @else
-                    <a href="#" class="bouton bouton-accent" style="display:inline-block;width:auto">
+                    <a href="{{ route('connexion.rediriger', [$client, $fournisseur]) }}" class="bouton bouton-accent" style="display:inline-block;width:auto">
                         Connecter {{ $p['nom'] }}
                     </a>
+                    @if($fournisseur === 'meta')
+                        <div style="font-size:12px;color:var(--encre-3);margin-top:6px">
+                            Une seule connexion branche la Page Facebook et le compte Instagram qui lui est rattaché.
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

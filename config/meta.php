@@ -22,6 +22,11 @@ return [
     'app_id'     => env('META_APP_ID'),
     'app_secret' => env('META_APP_SECRET'),
 
+    // Facebook Login for Business : identifiant de la « configuration » créée
+    // dans le tableau de bord de l'app. Facultatif ; sans lui, on liste les
+    // permissions dans la demande.
+    'login_config_id' => env('META_LOGIN_CONFIG_ID'),
+
     // Combien de publications on remonte à chaque synchronisation. Les capsules
     // sont publiées au fil des semaines ; il est inutile de repasser sur les
     // 72 à chaque fois. Les commentaires arrivent surtout sur le récent.

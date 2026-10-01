@@ -28,3 +28,7 @@ Thumbs.db
 
 # Journaux PHP de cPanel
 error_log
+publication.log
+/public/fichiers
+/storage/app/medias
+/storage/app/medias-envois

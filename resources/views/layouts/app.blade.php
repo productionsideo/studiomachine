@@ -29,6 +29,21 @@
             <a href="{{ route('leads.index', $q) }}" @class(['on' => request()->routeIs('leads.*')])>
                 Demandes
             </a>
+
+            <div class="rail-sep">Publication</div>
+            <a href="{{ route('calendrier.index', $q) }}" @class(['on' => request()->routeIs('calendrier.*', 'posts.*')])>
+                Calendrier
+            </a>
+            <a href="{{ route('campaigns.index', $q) }}" @class(['on' => request()->routeIs('campaigns.*')])>
+                Campagnes
+            </a>
+            @if($c || ! auth()->user()->isAdmin())
+                <a href="{{ route('medias.index', $q) }}" @class(['on' => request()->routeIs('medias.*')])>
+                    Médiathèque
+                </a>
+            @endif
+
+            <div class="rail-sep">Suivi</div>
             @if($c || ! auth()->user()->isAdmin())
                 <a href="{{ route('capsules.index', $q) }}" @class(['on' => request()->routeIs('capsules.*')])>
                     Capsules
