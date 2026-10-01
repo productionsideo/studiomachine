@@ -312,12 +312,26 @@ class Mediatheque
         }
     }
 
-    /** Supprime un média que plus aucune publication n'utilise. */
+    /**
+     * Supprime un média. Il est d'abord retiré des publications qui ne
+     * partiront plus (brouillons, publiées, échouées, annulées) ; on refuse
+     * s'il sert à une publication qui peut encore partir — le réseau
+     * viendrait chercher un fichier disparu.
+     */
     public function supprimer(MediaAsset $media): void
     {
-        if ($media->posts()->exists()) {
-            throw new \RuntimeException('Ce média est utilisé par une publication. Retirez-le d’abord de la publication.');
+        $bloquantes = $media->posts()
+            ->where('status', '!=', 'brouillon')
+            ->whereHas('targets', fn ($q) => $q->whereIn('status', ['en_attente', 'en_cours']))
+            ->get();
+
+        if ($bloquantes->isNotEmpty()) {
+            $titres = $bloquantes->map(fn ($p) => '« ' . Str::limit($p->caption ?: 'sans texte', 40) . ' »')->join(', ');
+
+            throw new \RuntimeException("Ce média sert à une publication qui peut encore partir : {$titres}. Annulez-la ou remettez-la en brouillon d’abord.");
         }
+
+        $media->posts()->detach();
 
         if ($media->surR2()) {
             $this->r2->supprimer($media->filename);

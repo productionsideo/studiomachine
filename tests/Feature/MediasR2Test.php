@@ -166,4 +166,43 @@ class MediasR2Test extends TestCase
         $this->assertContains('DELETE /studiomachine/abc.mp4', $this->appels);
         $this->assertContains('DELETE /studiomachine/abc.jpg', $this->appels);
     }
+
+    public function test_un_media_est_retire_des_brouillons_puis_supprime(): void
+    {
+        $m = $this->mediaR2();
+        $brouillon = \App\Models\Post::create(['client_id' => $this->client->id, 'caption' => 'B', 'status' => 'brouillon']);
+        $brouillon->media()->attach($m->id, ['position' => 0]);
+
+        $this->actingAs($this->admin)->delete(route('medias.destroy', $m))->assertRedirect();
+
+        $this->assertNull(MediaAsset::find($m->id));
+        $this->assertCount(0, $brouillon->fresh()->media);
+    }
+
+    public function test_un_media_d_une_publication_qui_peut_partir_est_garde(): void
+    {
+        $m = $this->mediaR2();
+        $fb = \App\Models\Integration::create([
+            'client_id' => $this->client->id, 'platform' => 'facebook', 'access_token' => 'j', 'active' => true,
+        ]);
+        $post = \App\Models\Post::create([
+            'client_id' => $this->client->id, 'caption' => 'Test Reel', 'status' => 'programmee', 'scheduled_at' => now(),
+        ]);
+        $post->targets()->create(['integration_id' => $fb->id, 'platform' => 'facebook', 'format' => 'reel']);
+        $post->media()->attach($m->id, ['position' => 0]);
+
+        $this->actingAs($this->admin)->delete(route('medias.destroy', $m))
+            ->assertSessionHas('ok', fn ($msg) => str_contains($msg, '« Test Reel »'));
+
+        $this->assertNotNull(MediaAsset::find($m->id));
+        $this->assertNotContains('DELETE /studiomachine/abc.mp4', $this->appels);
+    }
+
+    private function mediaR2(): MediaAsset
+    {
+        return MediaAsset::create([
+            'client_id' => $this->client->id, 'kind' => 'video', 'original_name' => 'v.mp4',
+            'filename' => 'abc.mp4', 'mime' => 'video/mp4', 'disk' => 'r2', 'size_bytes' => 10,
+        ]);
+    }
 }

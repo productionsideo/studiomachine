@@ -35,8 +35,11 @@
                 {{ $m->width && $m->height ? "{$m->width}×{$m->height}" : '' }} · {{ $m->tailleLisible() }}
                 @if($m->posts_count) · {{ $m->posts_count }} publication(s) @endif
             </div>
-            @if($admin && ! $m->posts_count)
-                <form method="post" action="{{ route('medias.destroy', $m) }}" onsubmit="return confirm('Supprimer ce média ?')">
+            @if($admin)
+                <form method="post" action="{{ route('medias.destroy', $m) }}"
+                      onsubmit="return confirm(@js($m->posts_count
+                          ? "Ce média sert à {$m->posts_count} publication(s). Il en sera retiré, puis supprimé. Continuer ?"
+                          : 'Supprimer ce média ?'))">
                     @csrf @method('delete')
                     <button class="lien-discret" type="submit" style="padding:0">Supprimer</button>
                 </form>
