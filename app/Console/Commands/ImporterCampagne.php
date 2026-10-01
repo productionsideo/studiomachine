@@ -188,7 +188,7 @@ class ImporterCampagne extends Command
         $existant = MediaAsset::where('client_id', $client->id)
             ->where('original_name', basename($chemin))
             ->get()
-            ->first(fn ($m) => is_file($m->chemin()) && $this->memeFichier($m, $chemin, $empreinte));
+            ->first(fn ($m) => $m->disponible() && $this->memeFichier($m, $chemin, $empreinte));
 
         if ($existant) {
             return $existant->id;
@@ -206,8 +206,14 @@ class ImporterCampagne extends Command
     {
         // Une image PNG est convertie en JPEG à l'import : son empreinte
         // change. On se contente alors du nom et de la taille d'origine.
-        return $m->mime === 'image/jpeg' && ! str_ends_with(strtolower($chemin), '.jpg') && ! str_ends_with(strtolower($chemin), '.jpeg')
-            ? true
+        if ($m->mime === 'image/jpeg' && ! str_ends_with(strtolower($chemin), '.jpg') && ! str_ends_with(strtolower($chemin), '.jpeg')) {
+            return true;
+        }
+
+        // Sur R2, on ne retélécharge pas tout pour comparer : même nom, même
+        // taille suffit (le contenu n'est pas modifié à l'envoi).
+        return $m->surR2()
+            ? (int) $m->size_bytes === filesize($chemin)
             : hash_file('sha256', $m->chemin()) === $empreinte;
     }
 }

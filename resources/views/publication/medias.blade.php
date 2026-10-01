@@ -50,13 +50,12 @@
 {{ $medias->links() }}
 
 @if($admin)
+@include('publication._envoi-medias')
 <script>
 (() => {
-    const MORCEAU = {{ \App\Services\Mediatheque::tailleMorceau() }};
     const depot = document.getElementById('depot');
     const fichier = document.getElementById('fichier');
     const envois = document.getElementById('envois');
-    const jeton = @json(csrf_token());
     let recharger = false;
 
     depot.addEventListener('click', e => { if (e.target === depot || e.target.tagName === 'U') fichier.click(); });
@@ -77,22 +76,10 @@
         ligne.querySelector('span').textContent = f.name;
         envois.appendChild(ligne);
         const barre = ligne.querySelector('.jauge-part');
-        const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-        const total = Math.max(1, Math.ceil(f.size / MORCEAU));
 
         try {
-            for (let i = 0; i < total; i++) {
-                const d = new FormData();
-                d.append('envoi', id); d.append('index', i); d.append('total', total); d.append('nom', f.name);
-                d.append('morceau', f.slice(i * MORCEAU, (i + 1) * MORCEAU), f.name);
-                const r = await fetch(@json(route('medias.morceau', $client)), {
-                    method: 'POST', body: d, headers: { 'X-CSRF-TOKEN': jeton, 'Accept': 'application/json' },
-                });
-                const json = await r.json().catch(() => ({}));
-                if (!r.ok) throw new Error(json.erreur || json.message || `HTTP ${r.status}`);
-                barre.style.width = `${Math.round((i + 1) / total * 100)}%`;
-                if (json.media) recharger = true;
-            }
+            await envoyerMedia(f, p => barre.style.width = `${Math.round(p * 100)}%`);
+            recharger = true;
         } catch (err) {
             ligne.querySelector('span').textContent = `${f.name} — ${err.message}`;
             ligne.style.color = 'var(--accent)';

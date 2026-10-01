@@ -35,6 +35,23 @@ return [
 
         'ffmpeg'  => env('FFMPEG_BIN', 'ffmpeg'),
         'ffprobe' => env('FFPROBE_BIN', 'ffprobe'),
+
+        // Petite copie locale d'un média stocké sur R2, le temps de l'envoyer
+        // à YouTube ou TikTok (qui reçoivent le fichier, pas une adresse).
+        'cache' => storage_path('app/medias-cache'),
+
+        // Cloudflare R2. Renseigné, il reçoit tous les nouveaux médias : les
+        // vidéos y vont directement depuis le navigateur, sans passer par le
+        // serveur (ni sa limite de 25 Mo par requête, ni ffprobe). Vide, tout
+        // reste sur le disque du serveur comme avant.
+        'r2' => [
+            'compte'      => env('R2_ACCOUNT_ID'),
+            'cle'         => env('R2_ACCESS_KEY_ID'),
+            'secret'      => env('R2_SECRET_ACCESS_KEY'),
+            'bucket'      => env('R2_BUCKET'),
+            'url'         => env('R2_PUBLIC_URL'),         // ex. https://medias.studiomachine.ca
+            'part_octets' => 10 * 1024 * 1024,             // R2 : 5 Mo minimum, toutes égales sauf la dernière
+        ],
     ],
 
     // Un échec passager (réseau, limite de débit) est retenté ; un refus

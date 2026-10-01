@@ -30,7 +30,7 @@ ssh -p $PORT "$SERVEUR" bash -s <<EOF
 set -e
 cd $APP
 sudo -u studiomachine $PHP artisan migrate --force
-sudo -u studiomachine mkdir -p storage/app/medias storage/app/medias-envois
+sudo -u studiomachine mkdir -p storage/app/medias storage/app/medias-envois storage/app/medias-cache
 sudo -u studiomachine ln -sfn $APP/storage/app/medias $WEB/fichiers
 install -o studiomachine -g studiomachine -m 644 public/assets/dashboard.css $WEB/assets/dashboard.css
 sudo -u studiomachine $PHP artisan config:clear

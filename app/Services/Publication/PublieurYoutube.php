@@ -106,7 +106,15 @@ class PublieurYoutube implements Publieur
             return Etape::echec($e->getMessage(), reessayable: ! str_contains($e->getMessage(), 'rebranché'));
         }
 
-        $taille = filesize($video->chemin());
+        // Une vidéo sur R2 est d'abord copiée sur le serveur : YouTube reçoit
+        // le fichier lui-même.
+        try {
+            $fichier = $video->fichierLocal();
+        } catch (\Throwable $e) {
+            return Etape::echec('Vidéo illisible sur le stockage : ' . $e->getMessage(), reessayable: true);
+        }
+
+        $taille = @filesize($fichier);
 
         if ($taille === false) {
             return Etape::echec('Le fichier vidéo est introuvable sur le serveur.');
@@ -134,7 +142,7 @@ class PublieurYoutube implements Publieur
         // Si le PUT échoue en route, YouTube a pu tout recevoir quand même.
         // On ne retente donc jamais seul : un humain vérifie la chaîne.
 
-        $flux = fopen($video->chemin(), 'rb');
+        $flux = fopen($fichier, 'rb');
 
         try {
             $envoi = Http::timeout(900)

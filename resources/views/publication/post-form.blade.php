@@ -295,6 +295,7 @@
     </div>
 </form>
 
+@include('publication._envoi-medias')
 <script>
 (() => {
     const form     = document.getElementById('editeur');
@@ -354,13 +355,10 @@
     };
     grille.addEventListener('click', e => { const v = e.target.closest('.vignette'); if (v) basculer(v); });
 
-    // --- Envoi des fichiers, en morceaux ---------------------------------------
-    // Le serveur plafonne la taille des requêtes : on découpe le fichier.
-    const MORCEAU = {{ \App\Services\Mediatheque::tailleMorceau() }};
+    // --- Envoi des fichiers (voir publication/_envoi-medias) ---------------------
     const depot = document.getElementById('depot');
     const fichier = document.getElementById('fichier');
     const envois = document.getElementById('envois');
-    const jeton = form.querySelector('input[name=_token]').value;
 
     depot.addEventListener('click', e => { if (e.target === depot || e.target.tagName === 'U') fichier.click(); });
     depot.addEventListener('dragover', e => { e.preventDefault(); depot.classList.add('survol'); });
@@ -380,28 +378,8 @@
         envois.appendChild(ligne);
         const barre = ligne.querySelector('.jauge-part');
 
-        const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-        const total = Math.max(1, Math.ceil(f.size / MORCEAU));
-
         try {
-            for (let i = 0; i < total; i++) {
-                const donnees = new FormData();
-                donnees.append('envoi', id);
-                donnees.append('index', i);
-                donnees.append('total', total);
-                donnees.append('nom', f.name);
-                donnees.append('morceau', f.slice(i * MORCEAU, (i + 1) * MORCEAU), f.name);
-
-                const r = await fetch(@json(route('medias.morceau', $client)), {
-                    method: 'POST', body: donnees,
-                    headers: { 'X-CSRF-TOKEN': jeton, 'Accept': 'application/json' },
-                });
-                const json = await r.json().catch(() => ({}));
-                if (!r.ok) throw new Error(json.erreur || json.message || `HTTP ${r.status}`);
-
-                barre.style.width = `${Math.round((i + 1) / total * 100)}%`;
-                if (json.media) ajouterVignette(json.media);
-            }
+            ajouterVignette(await envoyerMedia(f, p => barre.style.width = `${Math.round(p * 100)}%`));
             setTimeout(() => ligne.remove(), 1500);
         } catch (err) {
             ligne.querySelector('span').textContent = `${f.name} — ${err.message}`;

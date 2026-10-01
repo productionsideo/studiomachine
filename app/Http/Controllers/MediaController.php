@@ -62,7 +62,69 @@ class MediaController extends Controller
             return response()->json(['suite' => true]);
         }
 
-        return response()->json(['media' => [
+        return response()->json(['media' => $this->resume($media)]);
+    }
+
+    /**
+     * Envoi direct d'une vidéo vers R2 : le serveur ouvre l'envoi et signe
+     * une adresse par partie ; le navigateur dépose les parties lui-même.
+     */
+    public function debutDirect(Request $request, Client $client, Mediatheque $mediatheque)
+    {
+        $this->authorizeClient($request, $client->id);
+
+        $d = $request->validate([
+            'nom'    => ['required', 'string', 'max:255'],
+            'taille' => ['required', 'integer', 'min:1'],
+            'type'   => ['required', 'string', 'max:60'],
+        ]);
+
+        try {
+            return response()->json($mediatheque->debuterEnvoiDirect(
+                $client, $request->user(), $d['nom'], (int) $d['taille'], $d['type'],
+            ));
+        } catch (\Throwable $e) {
+            return response()->json(['erreur' => $e->getMessage()], 422);
+        }
+    }
+
+    public function finDirect(Request $request, Client $client, Mediatheque $mediatheque)
+    {
+        $this->authorizeClient($request, $client->id);
+
+        $d = $request->validate([
+            'envoi'    => ['required', 'string', 'max:1024'],
+            'parts'    => ['required', 'array', 'min:1', 'max:10000'],
+            'parts.*'  => ['required', 'string', 'max:200'],
+            'largeur'  => ['nullable', 'numeric'],
+            'hauteur'  => ['nullable', 'numeric'],
+            'duree'    => ['nullable', 'numeric'],
+            'vignette' => ['nullable', 'file', 'max:4096'],
+        ]);
+
+        try {
+            $media = $mediatheque->terminerEnvoiDirect(
+                $client, $d['envoi'], $d['parts'], $d, $request->file('vignette'),
+            );
+        } catch (\Throwable $e) {
+            return response()->json(['erreur' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['media' => $this->resume($media)]);
+    }
+
+    public function abandonDirect(Request $request, Client $client, Mediatheque $mediatheque)
+    {
+        $this->authorizeClient($request, $client->id);
+
+        $mediatheque->abandonnerEnvoiDirect($client, (string) $request->input('envoi'));
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function resume(MediaAsset $media): array
+    {
+        return [
             'id'       => $media->id,
             'nom'      => $media->original_name,
             'genre'    => $media->kind,
@@ -70,7 +132,7 @@ class MediaController extends Controller
             'duree'    => $media->duration_seconds,
             'largeur'  => $media->width,
             'hauteur'  => $media->height,
-        ]]);
+        ];
     }
 
     public function destroy(Request $request, MediaAsset $media, Mediatheque $mediatheque)

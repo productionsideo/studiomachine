@@ -80,6 +80,15 @@ Route::middleware('auth')->group(function () {
         // plafond de débit doit laisser passer une vidéo de 1 Go (128 morceaux).
         Route::post('/medias/{client}/morceau', [MediaController::class, 'morceau'])
             ->middleware('throttle:300,1')->name('medias.morceau');
+
+        // Vidéos vers Cloudflare R2 : seuls le début et la fin passent ici,
+        // les parties vont du navigateur à R2 directement.
+        Route::post('/medias/{client}/direct/debut',   [MediaController::class, 'debutDirect'])
+            ->middleware('throttle:30,1')->name('medias.direct.debut');
+        Route::post('/medias/{client}/direct/fin',     [MediaController::class, 'finDirect'])
+            ->middleware('throttle:30,1')->name('medias.direct.fin');
+        Route::post('/medias/{client}/direct/abandon', [MediaController::class, 'abandonDirect'])
+            ->middleware('throttle:30,1')->name('medias.direct.abandon');
         Route::delete('/medias/{media}',        [MediaController::class, 'destroy'])->name('medias.destroy');
     });
 

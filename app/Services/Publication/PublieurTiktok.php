@@ -112,7 +112,7 @@ class PublieurTiktok implements Publieur
             if ($video->duration_seconds && $video->duration_seconds > 600) {
                 $problemes[] = 'La vidéo dépasse 10 minutes.';
             }
-            if (! is_file($video->chemin())) {
+            if (! $video->disponible()) {
                 $problemes[] = 'Le fichier vidéo est introuvable sur le serveur.';
             }
         }
@@ -155,7 +155,15 @@ class PublieurTiktok implements Publieur
             return Etape::echec("Ce compte TikTok accepte des vidéos de {$compte['duree_max']} s au plus.");
         }
 
-        $taille   = filesize($video->chemin());
+        // Une vidéo sur R2 est d'abord copiée sur le serveur : TikTok reçoit
+        // le fichier lui-même. Rien n'existe encore chez TikTok, on peut retenter.
+        try {
+            $fichier = $video->fichierLocal();
+        } catch (\Throwable $e) {
+            return Etape::echec('Vidéo illisible sur le stockage : ' . $e->getMessage(), reessayable: true);
+        }
+
+        $taille   = filesize($fichier);
         $decoupe  = $this->decouper($taille);
 
         $marque = (bool) $cible->option('contenu_commercial');
@@ -206,7 +214,7 @@ class PublieurTiktok implements Publieur
         // --- Après init : le publish_id existe. Tout échec est définitif. ---
 
         try {
-            $this->envoyerMorceaux($corps['data']['upload_url'], $video->chemin(), $video->mime, $taille, $decoupe);
+            $this->envoyerMorceaux($corps['data']['upload_url'], $fichier, $video->mime, $taille, $decoupe);
         } catch (\Throwable $e) {
             return Etape::echec("Envoi du fichier à TikTok interrompu (publish_id {$publishId}) : " . $e->getMessage());
         }

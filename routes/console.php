@@ -26,3 +26,9 @@ Schedule::command('ga4:synchroniser')
     ->everyThreeHours()
     ->withoutOverlapping(60)
     ->appendOutputTo(storage_path('logs/ga4.log'));
+
+// Copies locales de vidéos R2 (envoyées à YouTube ou TikTok) : effacées
+// après un jour.
+Schedule::call(fn () => \App\Services\Mediatheque::nettoyerCache())
+    ->daily()
+    ->name('medias:nettoyer-cache');

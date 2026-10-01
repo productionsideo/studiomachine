@@ -25,9 +25,21 @@ use Symfony\Component\Process\Process;
  * Chaque réseau a ses exigences (durée, ratio, poids). Les connaître au
  * moment du dépôt permet de prévenir dans l'éditeur, plutôt que d'apprendre à
  * 9 h, par un refus d'Instagram, que la vidéo était en 16:9.
+ *
+ * Avec Cloudflare R2
+ * ------------------
+ * Quand R2 est configuré, une vidéo ne passe plus du tout par le serveur : le
+ * navigateur la dépose directement chez R2 (envoi en plusieurs parties, voir
+ * debuterEnvoiDirect) et en lit lui-même durée, dimensions et vignette. Lancé
+ * depuis une page web, ffprobe se bloquait sur le serveur (30 s pour une
+ * analyse de 0,2 s en ligne de commande) : on ne dépend plus de lui là.
+ * Les images gardent le chemin en morceaux (conversion JPEG côté serveur),
+ * puis rejoignent R2.
  */
 class Mediatheque
 {
+    public function __construct(private R2 $r2) {}
+
     /**
      * La taille des morceaux envoyés par le navigateur.
      *
@@ -139,11 +151,14 @@ class Mediatheque
         $dossier = config('publication.medias.dossier');
         File::ensureDirectoryExists($dossier);
 
-        $nom = Str::random(40) . '.' . $extension;
-        File::move($source, "{$dossier}/{$nom}");
-        @chmod("{$dossier}/{$nom}", 0644);
+        $nom    = Str::random(40) . '.' . $extension;
+        $chemin = "{$dossier}/{$nom}";
+        File::move($source, $chemin);
+        @chmod($chemin, 0644);
 
-        $infos = $this->sonder("{$dossier}/{$nom}");
+        // Une image se mesure sans ffprobe (qui se bloque quand il est lancé
+        // depuis une page web sur le serveur).
+        $infos = $genre === 'image' ? $this->mesurerImage($chemin) : $this->sonder($chemin);
 
         $media = MediaAsset::create([
             'client_id'        => $client->id,
@@ -152,7 +167,7 @@ class Mediatheque
             'original_name'    => mb_substr($nomOriginal, 0, 255),
             'filename'         => $nom,
             'mime'             => $mime,
-            'size_bytes'       => filesize("{$dossier}/{$nom}"),
+            'size_bytes'       => filesize($chemin),
             'width'            => $infos['width'] ?? null,
             'height'           => $infos['height'] ?? null,
             'duration_seconds' => $genre === 'video' ? ($infos['duration'] ?? null) : null,
@@ -162,7 +177,139 @@ class Mediatheque
             $media->update(['thumbnail' => $this->vignette($media)]);
         }
 
+        if (R2::actif()) {
+            $this->versR2($media);
+        }
+
         return $media;
+    }
+
+    /** Déplace sur R2 un média rangé sur le disque du serveur. */
+    private function versR2(MediaAsset $media): void
+    {
+        $dossier = config('publication.medias.dossier');
+
+        $this->r2->deposer($media->filename, "{$dossier}/{$media->filename}", $media->mime);
+        if ($media->thumbnail) {
+            $this->r2->deposer($media->thumbnail, "{$dossier}/{$media->thumbnail}", 'image/jpeg');
+        }
+
+        $media->update(['disk' => 'r2']);
+
+        @unlink("{$dossier}/{$media->filename}");
+        if ($media->thumbnail) {
+            @unlink("{$dossier}/{$media->thumbnail}");
+        }
+    }
+
+    // --- Envoi direct navigateur → R2 (vidéos) -------------------------------
+
+    /**
+     * Ouvre un envoi en plusieurs parties chez R2 et signe une adresse par
+     * partie. Le nom du fichier chez R2 est tiré ici, jamais par le navigateur.
+     */
+    public function debuterEnvoiDirect(Client $client, User $auteur, string $nomOriginal, int $taille, string $mime): array
+    {
+        $types = config('publication.medias.types');
+
+        if (($types[$mime][0] ?? null) !== 'video') {
+            throw new \RuntimeException('Seules les vidéos MP4 ou MOV passent par l’envoi direct.');
+        }
+        if ($taille < 1 || $taille > config('publication.medias.max_octets')) {
+            throw new \RuntimeException('Fichier trop lourd (1 Go au maximum).');
+        }
+
+        $cle    = Str::random(40) . '.' . $types[$mime][1];
+        $envoi  = $this->r2->creerEnvoi($cle, $mime);
+        $part   = (int) config('publication.medias.r2.part_octets');
+        $nombre = max(1, (int) ceil($taille / $part));
+
+        // Ce que le navigateur ne pourra pas changer à la fin de l'envoi.
+        cache()->put("envoi-r2:{$envoi}", [
+            'client' => $client->id,
+            'auteur' => $auteur->id,
+            'cle'    => $cle,
+            'nom'    => mb_substr($nomOriginal, 0, 255),
+            'taille' => $taille,
+        ], now()->addDay());
+
+        return [
+            'envoi'  => $envoi,
+            'part'   => $part,
+            'urls'   => array_map(fn ($n) => $this->r2->adressePartie($cle, $envoi, $n), range(1, $nombre)),
+        ];
+    }
+
+    /**
+     * Assemble les parties, vérifie le fichier (taille, vrai format) et le
+     * range. Durée, dimensions et vignette viennent du navigateur.
+     *
+     * @param array<int, string> $parts numéro => ETag
+     */
+    public function terminerEnvoiDirect(
+        Client $client,
+        string $envoi,
+        array $parts,
+        array $infos,
+        ?UploadedFile $vignette,
+    ): MediaAsset {
+        $e = cache()->get("envoi-r2:{$envoi}");
+
+        if (! $e || $e['client'] !== $client->id) {
+            throw new \RuntimeException('Envoi inconnu ou expiré. Recommencez.');
+        }
+
+        try {
+            $this->r2->terminerEnvoi($e['cle'], $envoi, $parts);
+        } catch (\Throwable $ex) {
+            $this->r2->abandonnerEnvoi($e['cle'], $envoi);
+            throw $ex;
+        }
+        cache()->forget("envoi-r2:{$envoi}");
+
+        // Le type se lit dans le contenu, comme pour un dépôt classique.
+        $taille = $this->r2->entete($e['cle'])['taille'] ?? 0;
+        $mime   = (new \finfo(FILEINFO_MIME_TYPE))->buffer($this->r2->debut($e['cle']));
+        $types  = config('publication.medias.types');
+
+        if ($taille !== $e['taille'] || ($types[$mime][0] ?? null) !== 'video') {
+            $this->r2->supprimer($e['cle']);
+            throw new \RuntimeException($taille !== $e['taille']
+                ? 'Le fichier reçu est incomplet. Recommencez l’envoi.'
+                : "Format non pris en charge ({$mime}). Vidéos MP4 ou MOV.");
+        }
+
+        $nomVignette = null;
+        if ($vignette && (new \finfo(FILEINFO_MIME_TYPE))->file($vignette->getRealPath()) === 'image/jpeg') {
+            $nomVignette = Str::random(40) . '.jpg';
+            $this->r2->deposer($nomVignette, $vignette->getRealPath(), 'image/jpeg');
+        }
+
+        $nombre = fn ($v, $max) => is_numeric($v) && $v > 0 && $v <= $max ? $v : null;
+
+        return MediaAsset::create([
+            'client_id'        => $client->id,
+            'uploaded_by'      => $e['auteur'],
+            'kind'             => 'video',
+            'original_name'    => $e['nom'],
+            'filename'         => $e['cle'],
+            'thumbnail'        => $nomVignette,
+            'mime'             => $mime,
+            'disk'             => 'r2',
+            'size_bytes'       => $taille,
+            'width'            => ($l = $nombre($infos['largeur'] ?? null, 16384)) ? (int) $l : null,
+            'height'           => ($h = $nombre($infos['hauteur'] ?? null, 16384)) ? (int) $h : null,
+            'duration_seconds' => ($d = $nombre($infos['duree'] ?? null, 86400)) ? round((float) $d, 2) : null,
+        ]);
+    }
+
+    public function abandonnerEnvoiDirect(Client $client, string $envoi): void
+    {
+        $e = cache()->pull("envoi-r2:{$envoi}");
+
+        if ($e && $e['client'] === $client->id) {
+            $this->r2->abandonnerEnvoi($e['cle'], $envoi);
+        }
     }
 
     /** Supprime un média que plus aucune publication n'utilise. */
@@ -172,14 +319,42 @@ class Mediatheque
             throw new \RuntimeException('Ce média est utilisé par une publication. Retirez-le d’abord de la publication.');
         }
 
-        $dossier = config('publication.medias.dossier');
+        if ($media->surR2()) {
+            $this->r2->supprimer($media->filename);
+            if ($media->thumbnail) {
+                $this->r2->supprimer($media->thumbnail);
+            }
+            @unlink(config('publication.medias.cache') . '/' . $media->filename);
+        } else {
+            $dossier = config('publication.medias.dossier');
 
-        @unlink("{$dossier}/{$media->filename}");
-        if ($media->thumbnail) {
-            @unlink("{$dossier}/{$media->thumbnail}");
+            @unlink("{$dossier}/{$media->filename}");
+            if ($media->thumbnail) {
+                @unlink("{$dossier}/{$media->thumbnail}");
+            }
         }
 
         $media->delete();
+    }
+
+    /** Efface les copies locales de médias R2 de plus d'un jour. */
+    public static function nettoyerCache(): int
+    {
+        $n = 0;
+        foreach (glob(config('publication.medias.cache') . '/*') ?: [] as $f) {
+            if (is_file($f) && filemtime($f) < time() - 86400) {
+                @unlink($f) && $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    private function mesurerImage(string $chemin): array
+    {
+        $taille = @getimagesize($chemin);
+
+        return $taille ? ['width' => $taille[0], 'height' => $taille[1]] : [];
     }
 
     /** Largeur, hauteur et durée, selon ffprobe. Vide si ffprobe est absent. */
@@ -199,7 +374,14 @@ class Mediatheque
             $chemin,
         ]);
         $process->setTimeout(30);
-        $process->run();
+
+        // Un ffprobe bloqué ne doit jamais faire échouer un dépôt : le média
+        // est rangé sans ses caractéristiques (medias:analyser les complète).
+        try {
+            $process->run();
+        } catch (\Symfony\Component\Process\Exception\RuntimeException) {
+            return [];
+        }
 
         if (! $process->isSuccessful()) {
             return [];
@@ -251,7 +433,14 @@ class Mediatheque
             '-y', $cible,
         ]);
         $process->setTimeout(60);
-        $process->run();
+
+        try {
+            $process->run();
+        } catch (\Symfony\Component\Process\Exception\RuntimeException) {
+            @unlink($cible);
+
+            return null;
+        }
 
         return $process->isSuccessful() && is_file($cible) ? $nom : null;
     }

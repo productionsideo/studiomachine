@@ -27,7 +27,9 @@ class AnalyserMedias extends Command
             ->get();
 
         foreach ($medias as $media) {
-            $infos = is_file($media->chemin()) ? $mediatheque->sonder($media->chemin()) : [];
+            // ffprobe lit aussi une adresse : un média sur R2 s'analyse sans le copier.
+            $source = $media->surR2() ? $media->url() : $media->chemin();
+            $infos  = $media->disponible() ? $mediatheque->sonder($source) : [];
 
             if (! $infos) {
                 $this->error("  ✗ #{$media->id} {$media->original_name} : analyse impossible");
