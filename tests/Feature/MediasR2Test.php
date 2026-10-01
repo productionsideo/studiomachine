@@ -19,6 +19,9 @@ class MediasR2Test extends TestCase
 {
     use RefreshDatabase;
 
+    // Les identifiants d'envoi de R2 sont longs (plus de 400 caractères).
+    private const ENVOI = 'ABTsA1lolU-26gXxK8E4vjKPxo5DlAboFGZlM2nWdq1NcFH52GOjwFmZq8ClLSWB51KRHL-ectJ67bFeLElWIAwBjNQtcxpQbVHi6USUfuU5TWygs3ydT4mJmUYeO_DFL7LcM_Wt6kmiJli1Rx8qoaJ73VW4Dn_OxoNcCtR9dGaIQb_9P2uN0wycediaoGVn9vUvCeJQkqQYU8c9Dqyc7q0mySKvQWDBpT9ycv69g1aTFx5p0N75ICnFqzHTskk-VgYEypkt89POIwl1wwgfRYrClz4huUUuL7AXwZfmYBO-BiMns5cC38mxz3nOrZ2ngcSNsxynU0glhiTtTBossRA';
+
     private const MP4 = "\x00\x00\x00\x20ftypisom\x00\x00\x02\x00isomiso2avc1mp41\x00\x00\x00\x08free";
 
     private Client $client;
@@ -63,7 +66,7 @@ class MediasR2Test extends TestCase
 
             return match (true) {
                 $r->method() === 'POST' && str_contains($r->url(), '?uploads') =>
-                    Http::response('<InitiateMultipartUploadResult><UploadId>envoi-42</UploadId></InitiateMultipartUploadResult>'),
+                    Http::response('<InitiateMultipartUploadResult><UploadId>' . self::ENVOI . '</UploadId></InitiateMultipartUploadResult>'),
                 $r->method() === 'POST' => Http::response('<CompleteMultipartUploadResult/>'),
                 $r->method() === 'HEAD' => Http::response('', 200, ['Content-Length' => (string) $this->tailleStockee]),
                 $r->method() === 'GET'  => Http::response(self::MP4, 206),
@@ -84,13 +87,13 @@ class MediasR2Test extends TestCase
             'nom' => 'Satellite 9x16.mp4', 'taille' => 50_000_000, 'type' => 'video/mp4',
         ])->assertOk()->json();
 
-        $this->assertSame('envoi-42', $debut['envoi']);
+        $this->assertSame(self::ENVOI, $debut['envoi']);
         $this->assertCount(5, $debut['urls']);   // 50 Mo en parties de 10 Mio
         $this->assertStringContainsString('partNumber=5', $debut['urls'][4]);
         $this->assertStringContainsString('X-Amz-Signature=', $debut['urls'][0]);
 
         $media = $this->actingAs($this->admin)->post(route('medias.direct.fin', $this->client), [
-            'envoi'    => 'envoi-42',
+            'envoi'    => self::ENVOI,
             'parts'    => [1 => '"a"', 2 => '"b"', 3 => '"c"', 4 => '"d"', 5 => '"e"'],
             'largeur'  => 1080, 'hauteur' => 1920, 'duree' => 17.578,
             'vignette' => UploadedFile::fake()->image('vignette.jpg', 480, 854),
@@ -105,7 +108,7 @@ class MediasR2Test extends TestCase
         $this->assertTrue($m->estVertical());
 
         // Assemblage, vérification, puis dépôt de la vignette.
-        $this->assertContains("POST /studiomachine/{$m->filename}?uploadId=envoi-42", $this->appels);
+        $this->assertContains("POST /studiomachine/{$m->filename}?uploadId=" . self::ENVOI, $this->appels);
         $this->assertContains("PUT /studiomachine/{$m->thumbnail}", $this->appels);
     }
 
@@ -118,7 +121,7 @@ class MediasR2Test extends TestCase
         $this->tailleStockee = 12_345;
 
         $this->actingAs($this->admin)->postJson(route('medias.direct.fin', $this->client), [
-            'envoi' => 'envoi-42', 'parts' => [1 => 'a'],
+            'envoi' => self::ENVOI, 'parts' => [1 => 'a'],
         ])->assertStatus(422)->assertJsonPath('erreur', 'Le fichier reçu est incomplet. Recommencez l’envoi.');
 
         $this->assertSame(0, MediaAsset::count());
@@ -134,7 +137,7 @@ class MediasR2Test extends TestCase
         $autre = Client::create(['name' => 'Autre', 'slug' => 'autre', 'api_key_prefix' => 'sm_autre00000', 'api_key_hash' => 'x']);
 
         $this->actingAs($this->admin)->postJson(route('medias.direct.fin', $autre), [
-            'envoi' => 'envoi-42', 'parts' => [1 => 'a'],
+            'envoi' => self::ENVOI, 'parts' => [1 => 'a'],
         ])->assertStatus(422)->assertJsonPath('erreur', 'Envoi inconnu ou expiré. Recommencez.');
     }
 

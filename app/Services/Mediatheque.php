@@ -225,13 +225,18 @@ class Mediatheque
         $nombre = max(1, (int) ceil($taille / $part));
 
         // Ce que le navigateur ne pourra pas changer à la fin de l'envoi.
-        cache()->put("envoi-r2:{$envoi}", [
-            'client' => $client->id,
-            'auteur' => $auteur->id,
-            'cle'    => $cle,
-            'nom'    => mb_substr($nomOriginal, 0, 255),
-            'taille' => $taille,
-        ], now()->addDay());
+        try {
+            cache()->put(self::cleCache($envoi), [
+                'client' => $client->id,
+                'auteur' => $auteur->id,
+                'cle'    => $cle,
+                'nom'    => mb_substr($nomOriginal, 0, 255),
+                'taille' => $taille,
+            ], now()->addDay());
+        } catch (\Throwable $e) {
+            $this->r2->abandonnerEnvoi($cle, $envoi);
+            throw $e;
+        }
 
         return [
             'envoi'  => $envoi,
@@ -253,7 +258,7 @@ class Mediatheque
         array $infos,
         ?UploadedFile $vignette,
     ): MediaAsset {
-        $e = cache()->get("envoi-r2:{$envoi}");
+        $e = cache()->get(self::cleCache($envoi));
 
         if (! $e || $e['client'] !== $client->id) {
             throw new \RuntimeException('Envoi inconnu ou expiré. Recommencez.');
@@ -265,7 +270,7 @@ class Mediatheque
             $this->r2->abandonnerEnvoi($e['cle'], $envoi);
             throw $ex;
         }
-        cache()->forget("envoi-r2:{$envoi}");
+        cache()->forget(self::cleCache($envoi));
 
         // Le type se lit dans le contenu, comme pour un dépôt classique.
         $taille = $this->r2->entete($e['cle'])['taille'] ?? 0;
@@ -303,9 +308,18 @@ class Mediatheque
         ]);
     }
 
+    /**
+     * L'identifiant d'envoi de R2 dépasse 400 caractères : trop long pour la
+     * colonne `key` du cache en base (255). On en garde l'empreinte.
+     */
+    private static function cleCache(string $envoi): string
+    {
+        return 'envoi-r2:' . hash('sha256', $envoi);
+    }
+
     public function abandonnerEnvoiDirect(Client $client, string $envoi): void
     {
-        $e = cache()->pull("envoi-r2:{$envoi}");
+        $e = cache()->pull(self::cleCache($envoi));
 
         if ($e && $e['client'] === $client->id) {
             $this->r2->abandonnerEnvoi($e['cle'], $envoi);
