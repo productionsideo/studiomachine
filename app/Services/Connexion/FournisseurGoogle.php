@@ -22,10 +22,15 @@ use Illuminate\Support\Facades\Http;
  */
 class FournisseurGoogle implements FournisseurOAuth
 {
+    /**
+     * Seulement ce qui sert déjà : Google refuse de vérifier une application
+     * qui demande une permission qu'elle n'utilise pas. Ajouter
+     * yt-analytics.readonly le jour où la page Analytique lira YouTube — et
+     * mettre à jour la politique de confidentialité du site en même temps.
+     */
     private const SCOPES = [
-        'https://www.googleapis.com/auth/youtube.upload',
-        'https://www.googleapis.com/auth/youtube.readonly',
-        'https://www.googleapis.com/auth/yt-analytics.readonly',
+        'https://www.googleapis.com/auth/youtube.upload',      // publier les vidéos programmées
+        'https://www.googleapis.com/auth/youtube.readonly',    // lire le nom et l'id de la chaîne
     ];
 
     public function urlAutorisation(string $etat, string $retour): string

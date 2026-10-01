@@ -39,7 +39,7 @@ class IntegrationController extends Controller
             'mode'       => 'oauth',
             'approbation'=> true,
             'donne'      => 'Publication de vidéos et de Shorts, vues, durée d’écoute.',
-            'exige'      => 'Un projet Google Cloud avec YouTube Data API v3 et YouTube Analytics API, un écran de consentement vérifié, puis l’audit YouTube : sans lui, toute vidéo envoyée par l’API reste privée. Quota par défaut : 100 mises en ligne par jour pour toute l’agence.',
+            'exige'      => 'Un projet Google Cloud avec YouTube Data API v3, un écran de consentement vérifié, puis l’audit YouTube : sans lui, toute vidéo envoyée par l’API reste privée. Quota par défaut : 100 mises en ligne par jour pour toute l’agence.',
             'delai'      => 'Quelques jours à quelques semaines (vérification Google).',
         ],
         'facebook' => [
