@@ -98,6 +98,11 @@ class Ga4Test extends TestCase
 
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'properties/553223905:runReport')
             && $r->hasHeader('Authorization', 'Bearer jeton-essai'));
+
+        // Le filtre des clics Amazon couvre les liens courts (a.co), comme
+        // le bouton d'achat de bj21rules.com.
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'runReport')
+            && str_contains(json_encode($r->data()), '"value":"a.co"'));
     }
 
     public function test_une_nouvelle_collecte_remplace_la_periode_sans_additionner(): void

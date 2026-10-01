@@ -34,13 +34,22 @@ class Ga4Collecte
 
             // Les clics sortants vers Amazon : la mesure améliorée de GA4 les
             // enregistre comme événement « click » avec le domaine du lien.
+            // Les boutons d'achat passent souvent par les liens courts
+            // d'Amazon (a.co, amzn.to) : un filtre sur « amazon » seul les
+            // manquait tous — c'était le cas de bj21rules.com.
+            $domaine = fn (string $type, string $valeur) => ['filter' => ['fieldName' => 'linkDomain', 'stringFilter' => ['matchType' => $type, 'value' => $valeur, 'caseSensitive' => false]]];
+
             $amazon = $this->ga4->rapport($integration, [
                 'dateRanges' => $plage,
                 'dimensions' => array_map(fn ($n) => ['name' => $n], ['date', 'sessionCampaignName', 'sessionSource']),
                 'metrics'    => [['name' => 'eventCount']],
                 'dimensionFilter' => ['andGroup' => ['expressions' => [
                     ['filter' => ['fieldName' => 'eventName', 'stringFilter' => ['matchType' => 'EXACT', 'value' => 'click']]],
-                    ['filter' => ['fieldName' => 'linkDomain', 'stringFilter' => ['matchType' => 'CONTAINS', 'value' => 'amazon', 'caseSensitive' => false]]],
+                    ['orGroup' => ['expressions' => [
+                        $domaine('CONTAINS', 'amazon'),
+                        $domaine('CONTAINS', 'amzn'),
+                        $domaine('EXACT', 'a.co'),
+                    ]]],
                 ]]],
             ]);
         } catch (\Throwable $e) {
