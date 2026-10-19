@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/campagnes',                    [CampaignController::class, 'store'])->name('campaigns.store');
         Route::get('/campagnes/{campaign}/modifier', [CampaignController::class, 'edit'])->name('campaigns.edit');
         Route::patch('/campagnes/{campaign}',        [CampaignController::class, 'update'])->name('campaigns.update');
+        Route::delete('/campagnes/{campaign}',       [CampaignController::class, 'destroy'])->name('campaigns.destroy');
 
         // Les morceaux d'un gros fichier arrivent l'un après l'autre : le
         // plafond de débit doit laisser passer une vidéo de 1 Go (128 morceaux).

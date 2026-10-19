@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -130,6 +131,39 @@ class CampaignController extends Controller
         $this->enregistrer($request, $campaign);
 
         return redirect()->route('campaigns.show', $campaign)->with('ok', 'Campagne enregistrée.');
+    }
+
+    /**
+     * Supprime la campagne. Ses publications perdent leur campagne
+     * (nullOnDelete) ; sur demande, celles qui ne sont pas parties sont
+     * supprimées aussi. Une publication en ligne ou en cours d'envoi ne l'est
+     * jamais : effacer la ligne ne l'effacerait pas du réseau.
+     */
+    public function destroy(Request $request, Campaign $campaign)
+    {
+        $this->authorizeClient($request, $campaign->client_id);
+
+        $request->validate(['publications' => ['nullable', Rule::in(['garder', 'supprimer'])]]);
+
+        $supprimees = 0;
+
+        DB::transaction(function () use ($request, $campaign, &$supprimees) {
+            if ($request->input('publications') === 'supprimer') {
+                $campaign->posts()
+                    ->whereDoesntHave('targets', fn ($q) => $q->whereIn('status', ['publiee', 'en_cours']))
+                    ->get()
+                    ->each(function ($post) use (&$supprimees) {
+                        $post->delete();
+                        $supprimees++;
+                    });
+            }
+
+            $campaign->delete();
+        });
+
+        return redirect()->route('campaigns.index', ['client' => $campaign->client->slug])
+            ->with('ok', "Campagne « {$campaign->name} » supprimée"
+                . ($supprimees ? " et {$supprimees} " . ($supprimees > 1 ? 'publications non parties' : 'publication non partie') : '') . '.');
     }
 
     private function enregistrer(Request $request, Campaign $campaign): void

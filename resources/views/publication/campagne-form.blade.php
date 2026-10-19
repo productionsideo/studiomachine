@@ -75,4 +75,35 @@
         </div>
     </form>
 </div>
+
+@if($campaign->exists)
+    @php
+        $nbPosts   = $campaign->posts()->count();
+        $nbParties = $campaign->posts()->whereHas('targets', fn ($q) => $q->whereIn('status', ['publiee', 'en_cours']))->count();
+    @endphp
+    <div class="panneau" style="margin-top:18px;border-color:#f4d3d7">
+        <h2>Supprimer la campagne</h2>
+        <form method="post" action="{{ route('campaigns.destroy', $campaign) }}" class="panneau-corps"
+              onsubmit="return confirm('Supprimer définitivement la campagne « {{ addslashes($campaign->name) }} » ?')">
+            @csrf @method('delete')
+            <p style="margin-bottom:10px">
+                Elle contient {{ $nbPosts }} publication{{ $nbPosts > 1 ? 's' : '' }}.
+                Les demandes déjà reçues restent dans Demandes (elles gardent leur code <code>{{ $campaign->utm_campaign }}</code>).
+            </p>
+            @if($nbPosts)
+                <div class="coches">
+                    <label><input type="radio" name="publications" value="garder" checked> Garder les publications, sans campagne</label>
+                    <label><input type="radio" name="publications" value="supprimer"> Supprimer aussi les publications qui ne sont pas parties (brouillons et programmées)</label>
+                </div>
+                @if($nbParties)
+                    <p style="font-size:13px;color:var(--encre-3);margin:6px 0 10px">
+                        {{ $nbParties }} publication{{ $nbParties > 1 ? 's sont' : ' est' }} en ligne ou en cours d’envoi :
+                        dans tous les cas, {{ $nbParties > 1 ? 'elles restent' : 'elle reste' }} ici pour l’historique (sans campagne).
+                    </p>
+                @endif
+            @endif
+            <button type="submit" class="bouton" style="background:var(--accent);color:#fff;width:auto">Supprimer la campagne</button>
+        </form>
+    </div>
+@endif
 @endsection
