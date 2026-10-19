@@ -40,7 +40,7 @@
                     <td class="num">{{ $c->posts_count }}</td>
                     <td class="num">{{ $c->publiees_count }}</td>
                     <td class="num">{{ $c->programmees_count }}</td>
-                    <td class="num"><strong>{{ $demandes["{$c->client_id}|{$c->utm_campaign}"] ?? 0 }}</strong></td>
+                    <td class="num"><strong>{{ $demandes[$c->id] ?? 0 }}</strong></td>
                 </tr>
             @empty
                 <tr><td colspan="7" class="vide">Aucune campagne pour l’instant.</td></tr>

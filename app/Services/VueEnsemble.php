@@ -66,21 +66,23 @@ class VueEnsemble
             ->get(['p.campaign_id', 's.publie_le', 's.vues'])
             ->groupBy('campaign_id');
 
-        $visites = DB::table('events')->where('type', 'pageview')->whereIn('utm_campaign', $campagnes->pluck('utm_campaign'))
-            ->selectRaw('client_id, utm_campaign, count(distinct session_id) n')->groupBy('client_id', 'utm_campaign')->get()
-            ->mapWithKeys(fn ($r) => ["{$r->client_id}|{$r->utm_campaign}" => (int) $r->n]);
-        $demandes = DB::table('leads')->whereIn('utm_campaign', $campagnes->pluck('utm_campaign'))
-            ->selectRaw('client_id, utm_campaign, count(*) n')->groupBy('client_id', 'utm_campaign')->get()
-            ->mapWithKeys(fn ($r) => ["{$r->client_id}|{$r->utm_campaign}" => (int) $r->n]);
+        // Chaque code (le sien et ceux de ses publicités) ramène à sa campagne.
+        $carte    = Campaign::parCode($campagnes);
+        $codes    = array_unique(array_map(fn ($k) => explode('|', $k, 2)[1], array_keys($carte)));
+        $ventiler = fn ($lignes) => $lignes->groupBy(fn ($r) => $carte["{$r->client_id}|{$r->utm_campaign}"] ?? 0)->map(fn ($g) => (int) $g->sum('n'));
+
+        $visites = $ventiler(DB::table('events')->where('type', 'pageview')->whereIn('utm_campaign', $codes)
+            ->selectRaw('client_id, utm_campaign, count(distinct session_id) n')->groupBy('client_id', 'utm_campaign')->get());
+        $demandes = $ventiler(DB::table('leads')->whereIn('utm_campaign', $codes)
+            ->selectRaw('client_id, utm_campaign, count(*) n')->groupBy('client_id', 'utm_campaign')->get());
 
         $fuseau = config('publication.fuseau');
         $auj    = now($fuseau)->startOfDay();
 
         return $campagnes->map(function (Campaign $c) use ($etats, $reseaux, $stats, $parJour, $visites, $demandes, $fuseau, $auj) {
             $e      = ($etats[$c->id] ?? collect())->pluck('n', 'status');
-            $cle    = $c->client_id . '|' . $c->utm_campaign;
-            $vis    = $visites[$cle] ?? 0;
-            $dem    = $demandes[$cle] ?? 0;
+            $vis    = $visites[$c->id] ?? 0;
+            $dem    = $demandes[$c->id] ?? 0;
             $s      = $stats[$c->id] ?? null;
 
             $etat = match (true) {

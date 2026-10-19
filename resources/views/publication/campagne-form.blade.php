@@ -61,6 +61,41 @@
                 </div>
             </div>
 
+            @php $rattaches = old('codes_suivi', $campaign->codes_suivi ?? []); @endphp
+            <div class="champ" style="margin-top:6px">
+                <label>Codes de suivi des publicités rattachées</label>
+                <div class="aide-champ" style="margin-bottom:8px">
+                    Une publicité Meta (ou passée par Metricool) met dans le lien l’identifiant de <em>sa</em> campagne publicitaire,
+                    pas le code ci-dessus. Cochez ceux qui font partie de cette campagne : leurs visites et leurs demandes y seront comptées.
+                </div>
+                @error('codes_suivi') <div class="erreur" style="display:block;margin-bottom:8px">{{ $message }}</div> @enderror
+                @if($detectes->isNotEmpty())
+                    <div class="tableau-cadre">
+                        <table>
+                            <thead><tr><th></th><th>Code vu sur le site</th><th>Source</th><th>Période</th><th class="num">Visites</th><th class="num">Demandes</th></tr></thead>
+                            <tbody>
+                            @foreach($detectes as $d)
+                                <tr @class(['grise' => $d['ailleurs']])>
+                                    <td><input type="checkbox" name="codes_suivi[]" value="{{ $d['code'] }}" id="code-{{ $loop->index }}"
+                                               @checked(in_array($d['code'], $rattaches, true)) @disabled($d['ailleurs'])></td>
+                                    <td><label for="code-{{ $loop->index }}"><code>{{ $d['code'] }}</code></label>
+                                        @if($d['ailleurs']) <span style="font-size:12px;color:var(--encre-3)">— déjà dans « {{ $d['ailleurs'] }} »</span> @endif</td>
+                                    <td style="font-size:13px">{{ $d['sources'] ?: '—' }}</td>
+                                    <td style="font-size:13px;white-space:nowrap">{{ $d['debut'] ? $d['debut']->translatedFormat('j M') . ' → ' . $d['fin']->translatedFormat('j M Y') : 'pas encore vu' }}</td>
+                                    <td class="num">{{ number_format($d['visites'], 0, ',', ' ') }}</td>
+                                    <td class="num"><strong>{{ $d['demandes'] }}</strong></td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="aide-champ">Aucun autre code n’a encore été vu sur le site de {{ $client->name }}.</p>
+                @endif
+                <label for="codes_supplementaires" style="margin-top:10px;font-weight:400">Ou collez des codes (séparés par des espaces ou des virgules)</label>
+                <input type="text" id="codes_supplementaires" name="codes_supplementaires" value="{{ old('codes_supplementaires') }}" placeholder="ex. 120254359283750368">
+            </div>
+
             @if($campaign->exists)
                 <div class="coches">
                     <label><input type="checkbox" name="archived" value="1" @checked(old('archived', $campaign->archived))> Archivée (n’apparaît plus dans l’éditeur)</label>

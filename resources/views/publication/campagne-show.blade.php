@@ -11,6 +11,7 @@
             {{ $campaign->client->name }}
             · {{ $campaign->starts_on?->translatedFormat('j F Y') ?? '…' }} → {{ $campaign->ends_on?->translatedFormat('j F Y') ?? '…' }}
             · code de suivi <code>{{ $campaign->utm_campaign }}</code>
+            @if($campaign->codes_suivi) + {{ count($campaign->codes_suivi) }} code{{ count($campaign->codes_suivi) > 1 ? 's' : '' }} de publicité @endif
         </p>
     </div>
     @if($admin)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesClient;
+use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\Integration;
 use App\Services\Ga4Collecte;
@@ -53,8 +54,8 @@ class AnalytiqueController extends Controller
             ->selectRaw('campagne, sum(sessions) s, sum(sessions_engagees) e, sum(achats) a, sum(revenus) r')
             ->groupBy('campagne')->orderByDesc('s')->limit(20)->get();
 
-        // Nos campagnes, pour relier un code utm à sa fiche.
-        $nos = $client->campaigns()->pluck('id', 'utm_campaign');
+        // Nos campagnes, pour relier un code utm (le sien ou celui d'une publicité rattachée) à sa fiche.
+        $nos = collect(Campaign::proprietaires($client->id))->map->id;
 
         // Série continue, jours vides compris : un trou dans la courbe doit
         // se voir comme un zéro, pas disparaître.

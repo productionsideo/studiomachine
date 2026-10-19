@@ -84,4 +84,40 @@ class VueEnsembleTest extends TestCase
             ->assertSee('Demandes')
             ->assertDontSee(route('clients.index'), false);
     }
+
+    public function test_rattacher_les_codes_des_publicites_compte_leurs_visites_et_demandes(): void
+    {
+        $client = Client::first();
+        $cols   = array_flip(\Illuminate\Support\Facades\Schema::getColumnListing('events'));
+        foreach (range(1, 4) as $n) {
+            DB::table('events')->insert(array_intersect_key(['client_id' => $client->id, 'type' => 'pageview', 'session_id' => "m{$n}",
+                'utm_campaign' => '120254359283750368', 'utm_source' => 'fb', 'created_at' => now(), 'updated_at' => now()], $cols));
+        }
+        DB::table('leads')->insert(array_intersect_key(['client_id' => $client->id, 'utm_campaign' => '120254359283750368', 'external_id' => 'L2',
+            'name' => 'C D', 'email' => 'c@d.e', 'status' => 'nouveau', 'submitted_at' => now(), 'created_at' => now(), 'updated_at' => now()],
+            array_flip(\Illuminate\Support\Facades\Schema::getColumnListing('leads'))));
+
+        $camp = $client->campaigns()->first();
+
+        // Le formulaire montre le code vu sur le site, avec ses chiffres.
+        $this->actingAs($this->admin)->get(route('campaigns.edit', $camp))
+            ->assertOk()->assertSee('120254359283750368')->assertSee('Codes de suivi des publicités rattachées');
+
+        $this->actingAs($this->admin)->patch(route('campaigns.update', $camp), [
+            'name' => $camp->name, 'color' => '#9a0f20', 'codes_suivi' => ['120254359283750368'], 'codes_supplementaires' => '999, 888',
+        ])->assertRedirect();
+
+        $this->assertSame(['120254359283750368', '999', '888'], $camp->fresh()->codes_suivi);
+
+        $k = app(\App\Services\VueEnsemble::class)->campagnes()->first();
+        $this->assertSame(3 + 4, $k['visites']);     // son code + celui de la publicité
+        $this->assertSame(1 + 1, $k['demandes']);
+
+        // Un code déjà pris par une autre campagne du client est refusé.
+        $autre = $client->campaigns()->create(['name' => 'Autre', 'utm_campaign' => 'autre', 'color' => '#000000']);
+        $this->actingAs($this->admin)->patch(route('campaigns.update', $autre), [
+            'name' => 'Autre', 'color' => '#000000', 'codes_suivi' => ['120254359283750368'],
+        ])->assertSessionHasErrors('codes_suivi');
+        $this->assertNull($autre->fresh()->codes_suivi);
+    }
 }
