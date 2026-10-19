@@ -18,7 +18,9 @@ class ClientController extends Controller
     public function index()
     {
         return view('dashboard.clients', [
-            'clients' => Client::withCount(['leads', 'users'])->orderBy('name')->get(),
+            // Les actifs en cartes, avec leurs raccourcis ; les inactifs en liste.
+            'actifs'   => app(\App\Services\VueEnsemble::class)->clients(now()->subDays(30)->startOfDay()),
+            'inactifs' => Client::where('active', false)->orderBy('name')->get(),
         ]);
     }
 

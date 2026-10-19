@@ -32,6 +32,13 @@
             <a href="{{ route('resume.index', $q) }}" @class(['on' => request()->routeIs('resume.*')])>
                 Résumé réseaux
             </a>
+
+            <div class="rail-sep">Gestion</div>
+            @if(auth()->user()->isAdmin())
+                <a href="{{ route('clients.index') }}" @class(['on' => request()->routeIs('clients.*')])>
+                    Clients
+                </a>
+            @endif
             <a href="{{ route('leads.index', $q) }}" @class(['on' => request()->routeIs('leads.*')])>
                 Demandes
             </a>
@@ -74,9 +81,6 @@
 
             @if(auth()->user()->isAdmin())
                 <div class="rail-sep">Administration</div>
-                <a href="{{ route('clients.index') }}" @class(['on' => request()->routeIs('clients.*')])>
-                    Clients
-                </a>
                 <a href="{{ route('users.index') }}" @class(['on' => request()->routeIs('users.*')])>
                     Accès
                 </a>

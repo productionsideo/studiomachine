@@ -493,7 +493,7 @@ textarea { min-height: 90px; resize: vertical; }
 
 /* ---------- Résumé réseaux (tableau de bord façon Metricool) ---------- */
 .section-resume { font-size: 17px; font-weight: 650; margin: 26px 0 10px; }
-.section-resume:first-of-type { margin-top: 8px; }
+.tete + .section-resume { margin-top: 8px; }
 .resume-panneau { padding: 0; }
 .bloc { padding: 18px 20px; border-bottom: 1px solid var(--trait); }
 .bloc:last-child { border-bottom: 0; }
@@ -555,6 +555,42 @@ textarea { min-height: 90px; resize: vertical; }
 .pagination-resume nav ul { display: flex; gap: 8px; list-style: none; }
 .vide { color: var(--encre-3); font-size: 14px; }
 .attente-pub { font-size: 14px; color: var(--encre-2); }
+
+/* ---------- Vue d'ensemble et page Clients ---------- */
+.chiffres.chiffres-7 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.section-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 26px 0 10px; }
+.section-tete .section-resume { margin: 0; }
+.section-resume .aide { font-size: 12px; font-weight: 400; color: var(--encre-3); margin-left: 6px; }
+
+.cartes-campagnes, .cartes-clients { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+.carte-campagne, .carte-client {
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--surface); border: 1px solid var(--trait); border-radius: var(--rayon);
+    padding: 14px 16px; box-shadow: var(--ombre); min-width: 0;
+}
+.carte-campagne { border-top: 3px solid var(--couleur, var(--encre-3)); }
+.carte-campagne:hover { border-color: var(--encre-3); border-top-color: var(--couleur, var(--encre-3)); }
+.carte-tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.carte-tete .nom { font-weight: 650; font-size: 15px; display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.carte-sous { font-size: 12px; color: var(--encre-3); margin-top: -6px; }
+.carte-sous strong { color: var(--encre-2); font-weight: 600; }
+.carte-chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; }
+.carte-client .carte-chiffres { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.carte-chiffres div { display: flex; flex-direction: column; }
+.carte-chiffres .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.carte-chiffres .e { font-size: 11px; color: var(--encre-3); }
+.carte-chiffres .fort .v { color: var(--accent); }
+.carte-pied { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; margin-top: auto; }
+.badge-compte { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; color: var(--encre-2); }
+.muet { color: var(--encre-3); }
+.alerte-compte { margin-left: auto; color: var(--alerte); font-weight: 600; }
+.pastille-etat-en_cours  { background: #e9f7f0; color: var(--ok); border-color: #c9ecdb; }
+.pastille-etat-a_venir   { background: #eef4ff; color: #1d4ed8; border-color: #d6e3ff; }
+.pastille-etat-terminee  { background: var(--fond); color: var(--encre-3); }
+.raccourcis { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--trait); padding-top: 10px; }
+.raccourcis a { font-size: 12px; padding: 4px 9px; border: 1px solid var(--trait); border-radius: 6px; color: var(--encre-2); }
+.raccourcis a:hover { border-color: var(--encre-3); color: var(--encre); }
+.carte-campagne .graphe.mini { margin-top: 0; }
 
 /* ---------- Éditeur de publication ---------- */
 .editeur { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }

@@ -21,10 +21,19 @@ class DashboardController extends Controller
 
         // Un admin sans client choisi voit le portrait de tout le portefeuille.
         if (! $client) {
+            $ensemble  = app(\App\Services\VueEnsemble::class);
+            $campagnes = $ensemble->campagnes();
+
             return view('dashboard.overview', [
-                'clients' => $this->portfolio($since),
-                'days'    => $days,
-                'totals'  => $this->portfolioTotals($since),
+                'clients'   => $ensemble->clients($since),
+                'campagnes' => $campagnes,
+                'days'      => $days,
+                'totals'    => $this->portfolioTotals($since) + [
+                    'campagnes_en_cours' => $campagnes->where('etat', 'en_cours')->count(),
+                    'publiees'           => DB::table('post_targets')->where('status', 'publiee')->where('published_at', '>=', $since)->count(),
+                    'vues'               => (int) DB::table('stats_publications')->where('publie_le', '>=', $since)->sum('vues'),
+                    'interactions'       => (int) DB::table('stats_publications')->where('publie_le', '>=', $since)->sum('interactions'),
+                ],
             ]);
         }
 
@@ -192,33 +201,6 @@ class DashboardController extends Controller
                 'conversion' => $r->visits > 0 ? round($r->submits / $r->visits * 100, 1) : 0.0,
             ])
             ->toArray();
-    }
-
-    /** Vue d'ensemble : une ligne par client. */
-    private function portfolio($since): array
-    {
-        $stats = DB::table('events')
-            ->where('created_at', '>=', $since)
-            ->selectRaw("
-                client_id,
-                COUNT(DISTINCT CASE WHEN type = 'pageview' THEN session_id END) as visits,
-                COUNT(DISTINCT CASE WHEN type = 'submit'   THEN session_id END) as submits
-            ")
-            ->groupBy('client_id')
-            ->get()
-            ->keyBy('client_id');
-
-        return Client::orderBy('name')->get()->map(function ($c) use ($stats) {
-            $visits  = (int) ($stats[$c->id]->visits ?? 0);
-            $submits = (int) ($stats[$c->id]->submits ?? 0);
-
-            return [
-                'client'     => $c,
-                'visits'     => $visits,
-                'submits'    => $submits,
-                'conversion' => $visits > 0 ? round($submits / $visits * 100, 1) : 0.0,
-            ];
-        })->toArray();
     }
 
     private function portfolioTotals($since): array
