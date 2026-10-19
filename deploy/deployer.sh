@@ -32,7 +32,7 @@ cd $APP
 sudo -u studiomachine $PHP artisan migrate --force
 sudo -u studiomachine mkdir -p storage/app/medias storage/app/medias-envois storage/app/medias-cache
 sudo -u studiomachine ln -sfn $APP/storage/app/medias $WEB/fichiers
-install -o studiomachine -g studiomachine -m 644 public/assets/dashboard.css $WEB/assets/dashboard.css
+install -o studiomachine -g studiomachine -m 644 public/assets/*.css public/assets/*.svg public/assets/*.png $WEB/assets/
 sudo -u studiomachine $PHP artisan config:clear
 sudo -u studiomachine $PHP artisan view:clear
 sudo -u studiomachine $PHP artisan schedule:list

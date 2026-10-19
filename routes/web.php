@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/publications/{post}',          [PostController::class, 'update'])->name('posts.update');
         Route::delete('/publications/{post}',         [PostController::class, 'destroy'])->name('posts.destroy');
         Route::post('/publications/{post}/dupliquer', [PostController::class, 'dupliquer'])->name('posts.dupliquer');
+        Route::patch('/publications/{post}/deplacer', [CalendrierController::class, 'deplacer'])->name('posts.deplacer');
         Route::post('/publications/{post}/cibles/{cible}/relancer', [PostController::class, 'relancer'])->name('posts.relancer');
         Route::post('/publications/{post}/cibles/{cible}/annuler',  [PostController::class, 'annulerCible'])->name('posts.annuler');
 

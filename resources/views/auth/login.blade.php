@@ -5,7 +5,7 @@
 <div class="portail">
     <div class="portail-boite">
         <div class="portail-marque">
-            <span class="rail-logo">SM</span>
+            <img class="logo-sm" src="{{ asset('assets/logo-sm.svg') }}" alt="Studio Machine">
             <strong>Studio Machine</strong>
         </div>
         <h1>Gestion</h1>

@@ -6,6 +6,9 @@
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('titre', 'Gestion') — Studio Machine</title>
     <link rel="stylesheet" href="{{ asset('assets/dashboard.css') }}">
+    <link rel="icon" href="{{ asset('assets/favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('assets/favicon-32.png') }}" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="{{ asset('assets/apple-touch-icon.png') }}">
 </head>
 <body>
 
@@ -13,7 +16,7 @@
 <div class="app">
     <aside class="rail">
         <div class="rail-marque">
-            <span class="rail-logo">SM</span>
+            <img class="logo-sm" src="{{ asset('assets/logo-sm.svg') }}" alt="Studio Machine">
             <span class="rail-nom">Gestion</span>
         </div>
 

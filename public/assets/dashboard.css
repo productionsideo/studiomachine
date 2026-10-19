@@ -57,6 +57,7 @@ a { color: inherit; text-decoration: none; }
     border-radius: 8px;
     font-size: 12px; font-weight: 700; letter-spacing: .04em;
 }
+.logo-sm { width: 44px; height: auto; display: block; }
 .rail-nom { font-weight: 600; letter-spacing: -.01em; }
 
 .rail-nav { display: flex; flex-direction: column; gap: 2px; }
@@ -381,6 +382,98 @@ textarea { min-height: 90px; resize: vertical; }
     .cal-entete { display: none; }
     .cal-jour { min-height: 0; border-right: 0; }
     .cal-jour.hors { display: none; }
+}
+
+/* ---------- Calendrier : vue semaine ---------- */
+.bascule { display: inline-flex; gap: 0; }
+.bascule .bouton-fin:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.bascule .bouton-fin:last-child  { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; }
+
+.sem { overflow: hidden; }
+.sem-tete, .sem-corps { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); }
+.sem-tete { border-bottom: 1px solid var(--trait); }
+.sem-jour-tete {
+    font-size: 13px; font-weight: 600; text-align: center; padding: 10px 6px;
+    color: var(--encre-2); border-left: 1px solid var(--trait);
+}
+.sem-jour-tete.auj { background: var(--encre); color: #fff; }
+.sem-jour-tete.fin { background: var(--fond); }
+.sem-corps { max-height: 72vh; overflow-y: auto; position: relative; }
+/* Même réserve de barre de défilement en tête et dans le corps : les jours restent alignés. */
+.sem-tete, .sem-corps { scrollbar-gutter: stable; }
+.sem-tete { overflow-y: hidden; }
+.sem-heures { grid-column: 1; }
+.sem-heure {
+    height: var(--heure); font-size: 11px; color: var(--encre-3);
+    text-align: right; padding-right: 8px; transform: translateY(-7px);
+    font-variant-numeric: tabular-nums;
+}
+.sem-heure:first-child { transform: none; }
+.sem-col {
+    position: relative; height: calc(var(--heure) * 24);
+    border-left: 1px solid var(--trait);
+    background-image: linear-gradient(to bottom, var(--trait) 1px, transparent 1px);
+    background-size: 100% var(--heure);
+}
+.sem-col.fin { background-color: #fafbfc; }
+.sem-col.passe { background-color: #f3f4f6; }
+.sem-col.survol { background-color: #eef4ff; }
+.sem-maintenant { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--accent); z-index: 3; pointer-events: none; }
+.sem-maintenant::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.sem-repere { position: absolute; left: 0; right: 0; border-top: 2px dashed #1d4ed8; z-index: 4; pointer-events: none; }
+.sem-repere::after {
+    content: attr(data-heure); position: absolute; right: 4px; top: -18px;
+    font-size: 11px; font-weight: 650; color: #fff; background: #1d4ed8; border-radius: 4px; padding: 0 5px;
+}
+
+.sem-carte {
+    position: absolute; margin: 0 2px; height: calc(var(--heure) * 1.35);
+    display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+    background: var(--surface); border: 1px solid var(--trait);
+    border-left: 3px solid var(--couleur, var(--encre-3));
+    border-radius: 7px; padding: 5px 6px; font-size: 11.5px; line-height: 1.3;
+    box-shadow: var(--ombre); z-index: 2;
+}
+.sem-carte:hover { border-color: var(--encre-3); border-left-color: var(--couleur, var(--encre-3)); z-index: 5; }
+.sem-carte.mobile { cursor: grab; }
+.sem-carte.en-main, .cal-item.en-main { opacity: .45; }
+.sem-carte.enregistre, .cal-item.enregistre { outline: 2px dashed #1d4ed8; }
+.sem-carte.echec { background: var(--accent-pale); }
+.sem-carte.publiee { opacity: .8; }
+.sem-carte.brouillon { border-style: dashed; border-left-style: solid; }
+.sem-carte-tete { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.sem-carte .badges { display: inline-flex; gap: 2px; flex-wrap: wrap; }
+.sem-carte .h { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sem-carte .t { color: var(--encre-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sem-carte-pied { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.sem-carte-pied img { width: 22px; height: 22px; object-fit: cover; border-radius: 4px; }
+.sem-carte-pied .etat { font-size: 10px; color: var(--encre-3); margin-left: auto; }
+.cal-item.mobile { cursor: grab; }
+.cal-jour.survol { background: #eef4ff; }
+
+.badge-reseau {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 16px; height: 16px; padding: 0 3px; border-radius: 4px;
+    font-size: 9px; font-weight: 800; line-height: 1; color: #fff; font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.badge-facebook  { background: #1877f2; }
+.badge-instagram { background: linear-gradient(45deg, #f09433, #dc2743 50%, #bc1888); }
+.badge-youtube   { background: #ff0000; }
+.badge-tiktok    { background: #14161a; }
+.badge-linkedin, .badge-linkedin_profil { background: #0a66c2; }
+
+.toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+    background: var(--encre); color: #fff; padding: 10px 16px; border-radius: 8px;
+    font-size: 14px; box-shadow: var(--ombre); opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s; z-index: 50; max-width: min(92vw, 560px);
+}
+.toast.visible { opacity: 1; transform: translate(-50%, 0); }
+.toast.erreur { background: var(--accent); }
+
+@media (max-width: 900px) {
+    .sem-tete, .sem-corps { grid-template-columns: 40px repeat(7, minmax(110px, 1fr)); }
+    .sem { overflow-x: auto; }
 }
 
 /* ---------- Éditeur de publication ---------- */
