@@ -62,22 +62,44 @@
         </h2>
         <div class="panneau-corps">
             @php
-                $max = max(1, collect($daily)->max('visits'));
+                // Échelle « ronde » (1, 2, 2,5, 5 × 10ⁿ) pour que les graduations tombent juste.
+                $max  = max(1, collect($daily)->max('visits'));
+                $p10  = 10 ** floor(log10(max(1, $max / 3)));
+                $pas  = collect([1, 2, 2.5, 5, 10])->map(fn ($m) => $m * $p10)->first(fn ($v) => $v >= $max / 3);
+                $haut = max($pas, ceil($max / $pas) * $pas);
+                $n    = count($daily);
+                // Une date toutes les $tous colonnes : 8 étiquettes au plus, la dernière toujours.
+                $tous = max(1, (int) ceil($n / 8));
             @endphp
-            <div class="courbe">
-                @foreach($daily as $j)
-                    @php
-                        $hv = round($j['visits']  / $max * 150);
-                        $hs = round($j['submits'] / $max * 150);
-                    @endphp
-                    <div class="courbe-jour"
-                         title="{{ \Carbon\Carbon::parse($j['date'])->translatedFormat('j M') }} — {{ $j['visits'] }} visite(s), {{ $j['submits'] }} demande(s)">
-                        @if($j['submits'] > 0)
-                            <div class="courbe-envoi" style="height:{{ max(3, $hs) }}px"></div>
-                        @endif
-                        <div class="courbe-visite" style="height:{{ $hv }}px"></div>
+            <div class="activite">
+                <div class="activite-y">
+                    @for($t = $haut; $t >= 0; $t -= $pas)
+                        <span style="top: {{ (1 - $t / $haut) * 100 }}%">{{ number_format($t, 0, ',', ' ') }}</span>
+                    @endfor
+                </div>
+                <div class="activite-zone">
+                    @for($t = $pas; $t <= $haut; $t += $pas)
+                        <i class="activite-grille" style="bottom: {{ $t / $haut * 100 }}%"></i>
+                    @endfor
+                    <div class="courbe" id="activite">
+                        @foreach($daily as $j)
+                            <div class="courbe-jour"
+                                 data-jour="{{ ucfirst(\Carbon\Carbon::parse($j['date'])->translatedFormat('D j M')) }}"
+                                 data-visites="{{ $j['visits'] }}" data-demandes="{{ $j['submits'] }}">
+                                @if($j['submits'] > 0)
+                                    <div class="courbe-envoi" style="height:{{ max(3, round($j['submits'] / $haut * 150)) }}px"></div>
+                                @endif
+                                <div class="courbe-visite" style="height:{{ round($j['visits'] / $haut * 150) }}px"></div>
+                            </div>
+                        @endforeach
                     </div>
-                @endforeach
+                    <div class="activite-x">
+                        @foreach($daily as $i => $j)
+                            <span>@if($i % $tous === 0 || $i === $n - 1){{ \Carbon\Carbon::parse($j['date'])->translatedFormat('j M') }}@endif</span>
+                        @endforeach
+                    </div>
+                    <div class="activite-bulle" id="activite-bulle" hidden></div>
+                </div>
             </div>
             <div class="legende">
                 <span><i class="carre" style="background:#d8dce3"></i> Visites</span>
@@ -242,4 +264,24 @@
         </table>
     </div>
 </div>
+<script>
+(() => {
+    // Infobulle immédiate sur chaque jour du graphique Activité.
+    const zone = document.getElementById('activite'), bulle = document.getElementById('activite-bulle');
+    if (!zone) return;
+    zone.querySelectorAll('.courbe-jour').forEach(j => {
+        j.addEventListener('mouseenter', () => {
+            const v = +j.dataset.visites, d = +j.dataset.demandes;
+            bulle.innerHTML = `<strong>${j.dataset.jour}</strong><br>${v} visite${v > 1 ? 's' : ''}<br>${d} demande${d > 1 ? 's' : ''}`;
+            bulle.hidden = false;
+            const z = zone.getBoundingClientRect(), r = j.getBoundingClientRect();
+            const x = r.left - z.left + r.width / 2;
+            bulle.style.left = x + 'px';
+            bulle.classList.toggle('gauche', x > z.width * 0.7);
+            j.classList.add('survol');
+        });
+        j.addEventListener('mouseleave', () => { bulle.hidden = true; j.classList.remove('survol'); });
+    });
+})();
+</script>
 @endsection
