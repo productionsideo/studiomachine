@@ -11,7 +11,7 @@
     </div>
 </div>
 
-<div class="panneau" style="max-width:760px">
+<div class="panneau">
     <form method="post" action="{{ $campaign->exists ? route('campaigns.update', $campaign) : route('campaigns.store') }}">
         @csrf
         @if($campaign->exists) @method('patch') @endif

@@ -61,19 +61,19 @@
     $etiquettesX = $n > 1 ? array_unique([0, (int) round(($n - 1) / 4), (int) round(($n - 1) / 2), (int) round(3 * ($n - 1) / 4), $n - 1]) : [0];
 @endphp
 
-<div @class(['courbe', 'mini' => $mini]) style="--h: {{ $h }}px; --couleur: {{ $couleur }}"
+<div @class(['graphe', 'mini' => $mini]) style="--h: {{ $h }}px; --couleur: {{ $couleur }}"
      data-dates='@json($dates)' data-valeurs='@json($vals)' data-nom="{{ $nom ?? '' }}" @if($detail) data-detail='@json($detail)' @endif @if($barres) data-barres="1" @endif>
     @if(! $connus)
-        <div class="courbe-vide">{{ $mini ? '—' : 'Pas encore de données pour cette période.' }}</div>
+        <div class="graphe-vide">{{ $mini ? '—' : 'Pas encore de données pour cette période.' }}</div>
     @else
         @unless($mini)
-            <div class="courbe-y">
+            <div class="graphe-y">
                 @foreach(array_reverse($ticks) as $t)
                     <span style="top: {{ $y($t) / $h * 100 }}%">{{ $compact($t) }}</span>
                 @endforeach
             </div>
         @endunless
-        <div class="courbe-zone">
+        <div class="graphe-zone">
             <svg viewBox="0 0 1000 {{ $h }}" preserveAspectRatio="none" aria-hidden="true">
                 @unless($mini)
                     @foreach($ticks as $t)
@@ -98,7 +98,7 @@
             <span class="infobulle" hidden></span>
         </div>
         @unless($mini)
-            <div class="courbe-x">
+            <div class="graphe-x">
                 @foreach($etiquettesX as $i)
                     <span style="left: {{ $x($i) / 10 }}%">{{ \Illuminate\Support\Carbon::parse($dates[$i])->translatedFormat('j M') }}</span>
                 @endforeach

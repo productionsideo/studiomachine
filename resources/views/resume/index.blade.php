@@ -1,6 +1,5 @@
 @extends('layouts.app')
 @section('titre', 'Résumé — ' . $client->name)
-@section('classe-vue', 'pleine')
 
 @php
     use App\Http\Controllers\ResumeController as R;
@@ -155,8 +154,8 @@
     const nb = v => v === null ? '—' : new Intl.NumberFormat('fr-CA').format(v);
     const jour = d => new Intl.DateTimeFormat('fr-CA', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(d + 'T12:00:00Z'));
 
-    document.querySelectorAll('.courbe').forEach(c => {
-        const zone = c.querySelector('.courbe-zone');
+    document.querySelectorAll('.graphe').forEach(c => {
+        const zone = c.querySelector('.graphe-zone');
         if (!zone) return;
         const dates = JSON.parse(c.dataset.dates), vals = JSON.parse(c.dataset.valeurs);
         const detail = c.dataset.detail ? JSON.parse(c.dataset.detail) : null;

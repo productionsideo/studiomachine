@@ -88,7 +88,7 @@ a { color: inherit; text-decoration: none; }
 }
 .lien-discret:hover { color: var(--accent); }
 
-.vue { flex: 1; padding: 30px 36px 60px; max-width: 1400px; }
+.vue { flex: 1; padding: 30px 36px 60px; min-width: 0; }
 
 /* ---------- Titres et barres ---------- */
 
@@ -477,7 +477,6 @@ textarea { min-height: 90px; resize: vertical; }
 }
 
 /* ---------- Résumé réseaux (tableau de bord façon Metricool) ---------- */
-.vue.pleine { max-width: none; }
 .section-resume { font-size: 17px; font-weight: 650; margin: 26px 0 10px; }
 .section-resume:first-of-type { margin-top: 8px; }
 .resume-panneau { padding: 0; }
@@ -500,34 +499,34 @@ textarea { min-height: 90px; resize: vertical; }
 .tuile-reseau .valeur { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 4px; }
 .tuile-reseau .attente { font-size: 12px; color: var(--encre-3); margin-top: 6px; }
 
-.courbe { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: var(--h) 22px; height: calc(var(--h) + 22px); }
-.courbe.mini { grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--h); height: var(--h); margin-top: 6px; }
-.courbe-vide { grid-column: 1 / -1; display: grid; place-items: center; color: var(--encre-3); font-size: 13px; background: var(--fond); border-radius: 8px; }
-.courbe.mini .courbe-vide { background: none; font-size: 12px; place-items: center start; }
-.courbe-y { position: relative; height: var(--h); }
-.courbe-y span { position: absolute; right: 8px; transform: translateY(-50%); font-size: 11px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
-.courbe-zone { position: relative; height: var(--h); min-width: 0; cursor: crosshair; }
-.courbe.mini .courbe-zone { cursor: default; }
-.courbe-zone svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
-.courbe .grille { stroke: var(--trait); stroke-width: 1; }
-.courbe .trait { fill: none; stroke: var(--couleur); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.courbe .aire { fill: var(--couleur); opacity: .1; stroke: none; }
-.courbe .colonnes { position: absolute; inset: 0; display: flex; align-items: flex-end; }
-.courbe .colonnes span { flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 1px; }
-.courbe .colonnes i { display: block; width: 100%; max-width: 24px; background: var(--couleur); border-radius: 4px 4px 0 0; }
-.courbe.mini .colonnes i { border-radius: 2px 2px 0 0; }
-.courbe .point-fin { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--couleur); box-shadow: 0 0 0 2px var(--surface); transform: translate(-50%, -50%); pointer-events: none; }
-.courbe .curseur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--encre-3); pointer-events: none; }
-.courbe .infobulle {
+.graphe { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: var(--h) 22px; height: calc(var(--h) + 22px); }
+.graphe.mini { grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--h); height: var(--h); margin-top: 6px; }
+.graphe-vide { grid-column: 1 / -1; display: grid; place-items: center; color: var(--encre-3); font-size: 13px; background: var(--fond); border-radius: 8px; }
+.graphe.mini .graphe-vide { background: none; font-size: 12px; place-items: center start; }
+.graphe-y { position: relative; height: var(--h); }
+.graphe-y span { position: absolute; right: 8px; transform: translateY(-50%); font-size: 11px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
+.graphe-zone { position: relative; height: var(--h); min-width: 0; cursor: crosshair; }
+.graphe.mini .graphe-zone { cursor: default; }
+.graphe-zone svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.graphe .grille { stroke: var(--trait); stroke-width: 1; }
+.graphe .trait { fill: none; stroke: var(--couleur); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.graphe .aire { fill: var(--couleur); opacity: .1; stroke: none; }
+.graphe .colonnes { position: absolute; inset: 0; display: flex; align-items: flex-end; }
+.graphe .colonnes span { flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 1px; }
+.graphe .colonnes i { display: block; width: 100%; max-width: 24px; background: var(--couleur); border-radius: 4px 4px 0 0; }
+.graphe.mini .colonnes i { border-radius: 2px 2px 0 0; }
+.graphe .point-fin { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--couleur); box-shadow: 0 0 0 2px var(--surface); transform: translate(-50%, -50%); pointer-events: none; }
+.graphe .curseur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--encre-3); pointer-events: none; }
+.graphe .infobulle {
     position: absolute; top: 0; transform: translateX(10px); z-index: 5; pointer-events: none;
     background: var(--encre); color: #fff; font-size: 12px; line-height: 1.45; padding: 6px 9px; border-radius: 6px; white-space: nowrap;
 }
-.courbe .infobulle.gauche { transform: translateX(calc(-100% - 10px)); }
-.courbe .infobulle .detail { color: #d1d5db; }
-.courbe-x { grid-column: 2; position: relative; }
-.courbe-x span { position: absolute; top: 5px; transform: translateX(-50%); font-size: 11px; color: var(--encre-3); white-space: nowrap; }
-.courbe-x span:first-child { transform: none; }
-.courbe-x span:last-child { transform: translateX(-100%); }
+.graphe .infobulle.gauche { transform: translateX(calc(-100% - 10px)); }
+.graphe .infobulle .detail { color: #d1d5db; }
+.graphe-x { grid-column: 2; position: relative; }
+.graphe-x span { position: absolute; top: 5px; transform: translateX(-50%); font-size: 11px; color: var(--encre-3); white-space: nowrap; }
+.graphe-x span:first-child { transform: none; }
+.graphe-x span:last-child { transform: translateX(-100%); }
 
 .liste-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .liste-tete h3 { font-size: 15px; }
