@@ -100,9 +100,10 @@ class ConnexionController extends Controller
 
         if ($groupes->count() === 1) {
             $this->brancher($client, $groupes->first()->all());
+            $autres = $this->rafraichirAutres($request, $client, $comptes);
 
             return redirect()->route('integrations.index', ['client' => $client->slug])
-                ->with('ok', 'Compte connecté : ' . $groupes->first()->first()['libelle'] . '.');
+                ->with('ok', 'Compte connecté : ' . $groupes->first()->first()['libelle'] . '.' . $this->noteAutres($autres));
         }
 
         // Plusieurs Pages ou chaînes : la personne choisit. Les jetons restent
@@ -135,9 +136,10 @@ class ConnexionController extends Controller
         abort_if($comptes === [], 422);
 
         $this->brancher($client, $comptes);
+        $autres = $this->rafraichirAutres($request, $client, $choix['comptes']);
 
         return redirect()->route('integrations.index', ['client' => $client->slug])
-            ->with('ok', 'Compte connecté : ' . $comptes[0]['libelle'] . '.');
+            ->with('ok', 'Compte connecté : ' . $comptes[0]['libelle'] . '.' . $this->noteAutres($autres));
     }
 
     private function brancher(Client $client, array $comptes): void
@@ -159,6 +161,53 @@ class ConnexionController extends Controller
                 'last_error'          => null,
             ])->save();
         }
+    }
+
+    /**
+     * Met à jour les jetons des AUTRES clients dont la Page, le compte ou la
+     * chaîne figure dans cette même autorisation.
+     *
+     * Chez Meta, les autorisations sont celles de la personne pour toute
+     * l'application : chaque connexion remplace la sélection précédente, et
+     * les jetons des Pages décochées cessent de fonctionner. Une connexion qui
+     * coche tout doit donc remettre en marche tous les clients d'un coup, pas
+     * seulement celui depuis lequel on l'a lancée.
+     *
+     * @return list<string>  les clients remis à jour
+     */
+    private function rafraichirAutres(Request $request, Client $client, array $comptes): array
+    {
+        $noms = [];
+
+        foreach ($comptes as $c) {
+            $integrations = Integration::where('platform', $c['platform'])
+                ->where('external_account_id', $c['external_account_id'])
+                ->where('client_id', '!=', $client->id)
+                ->with('client')
+                ->get();
+
+            foreach ($integrations as $i) {
+                if (! $request->user()->canAccessClient($i->client_id)) {
+                    continue;
+                }
+
+                $i->update([
+                    'access_token'     => $c['access_token'],
+                    'refresh_token'    => $c['refresh_token'] ?? $i->refresh_token,
+                    'token_expires_at' => $c['token_expires_at'] ?? null,
+                    'active'           => true,
+                    'last_error'       => null,
+                ]);
+                $noms[$i->client->name] = true;
+            }
+        }
+
+        return array_keys($noms);
+    }
+
+    private function noteAutres(array $noms): string
+    {
+        return $noms ? ' Aussi remis à jour : ' . implode(', ', $noms) . '.' : '';
     }
 
     private function fournisseur(string $nom): FournisseurOAuth
