@@ -63,11 +63,11 @@ a { color: inherit; text-decoration: none; }
     font-size: 12px; font-weight: 700; letter-spacing: .04em;
 }
 .logo-sm { width: 44px; height: auto; display: block; }
-.rail-nom { font-family: var(--police-titre); font-weight: 400; letter-spacing: -.005em; }
+.rail-nom { font-weight: 700; letter-spacing: -.01em; }
 
 .rail-nav { display: flex; flex-direction: column; gap: 2px; }
 .rail-nav a {
-    font-family: var(--police-titre); font-weight: 400; letter-spacing: .005em;
+    font-weight: 700;
     padding: 8px 10px;
     border-radius: 7px;
     color: var(--encre-2);
@@ -78,8 +78,8 @@ a { color: inherit; text-decoration: none; }
 .rail-nav a.on { background: var(--accent-pale); color: var(--accent); }
 
 .rail-sep {
-    font-family: var(--police-titre); font-weight: 400;
-    font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
     color: var(--encre-3); padding: 20px 10px 6px;
 }
 
