@@ -40,7 +40,7 @@ class PostTarget extends Model
 
         // Instagram et TikTok ne rendent pas les liens cliquables dans la
         // légende : on ne les y met pas, ils feraient du bruit pour rien.
-        if ($lien && in_array($this->platform, ['facebook', 'youtube'], true)) {
+        if ($lien && in_array($this->platform, ['facebook', 'youtube', 'linkedin'], true)) {
             $texte = rtrim($texte) . "\n\n" . $lien;
         }
 

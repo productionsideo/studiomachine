@@ -25,7 +25,7 @@ class Integration extends Model
 
     public function client() { return $this->belongsTo(Client::class); }
 
-    public const PLATFORMS = ['ga4', 'youtube', 'facebook', 'instagram', 'tiktok'];
+    public const PLATFORMS = ['ga4', 'youtube', 'facebook', 'instagram', 'tiktok', 'linkedin'];
 
     public function isExpired(): bool
     {

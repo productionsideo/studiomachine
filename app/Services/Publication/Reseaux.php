@@ -38,6 +38,13 @@ final class Reseaux
             'formats'  => ['video' => 'Vidéo'],
             'texte_max'=> 2200,
         ],
+        'linkedin' => [
+            'nom'      => 'LinkedIn',
+            'publieur' => PublieurLinkedin::class,
+            // Texte, image(s) ou vidéo : le contenu se déduit des médias joints.
+            'formats'  => ['post' => 'Publication'],
+            'texte_max'=> 3000,
+        ],
     ];
 
     public static function publieur(string $plateforme): Publieur

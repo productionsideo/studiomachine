@@ -66,6 +66,14 @@ class IntegrationController extends Controller
             'exige'      => 'Une application TikTok (Login Kit + Content Posting API), puis l’audit de TikTok : avant lui, les vidéos ne peuvent partir qu’en privé, sur au plus 5 comptes par jour.',
             'delai'      => 'Revue de l’app : quelques jours à deux semaines ; audit de publication en plus.',
         ],
+        'linkedin' => [
+            'nom'        => 'LinkedIn',
+            'mode'       => 'oauth',
+            'approbation'=> true,
+            'donne'      => 'Publication (texte, images, vidéos) sur un profil ou une Page entreprise.',
+            'exige'      => 'Une application LinkedIn associée à la Page de Studio Machine. Le profil personnel se publie tout de suite (produits « Share on LinkedIn » et « Sign In with OpenID Connect ») ; les Pages entreprise des clients exigent la Community Management API, accordée après examen. Sans elle, l’accès expire au bout de 60 jours et le compte doit être rebranché.',
+            'delai'      => 'Profil : immédiat. Pages entreprise : examen LinkedIn, de quelques jours à quelques semaines.',
+        ],
     ];
 
     public function index(Request $request)
@@ -148,7 +156,7 @@ class IntegrationController extends Controller
     {
         $configurees = [];
 
-        foreach (['youtube' => 'google', 'facebook' => 'meta', 'instagram' => 'meta', 'tiktok' => 'tiktok'] as $plateforme => $fournisseur) {
+        foreach (['youtube' => 'google', 'facebook' => 'meta', 'instagram' => 'meta', 'tiktok' => 'tiktok', 'linkedin' => 'linkedin'] as $plateforme => $fournisseur) {
             if (config("services.{$fournisseur}.client_id")) {
                 $configurees[] = $plateforme;
             }

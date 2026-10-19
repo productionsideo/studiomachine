@@ -55,4 +55,17 @@ return [
         'redirect'      => env('APP_URL') . '/integrations/tiktok/retour',
     ],
 
+    // Les permissions dépendent des produits accordés à l'application
+    // LinkedIn (voir FournisseurLinkedin) : profil personnel par défaut ;
+    // « w_organization_social r_organization_social rw_organization_admin »
+    // une fois la Community Management API approuvée, pour les Pages.
+    'linkedin' => [
+        'client_id'     => env('LINKEDIN_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        'redirect'      => env('APP_URL') . '/integrations/linkedin/retour',
+        'scopes'        => env('LINKEDIN_SCOPES', 'openid profile w_member_social'),
+        // Version de l'API (AAAAMM), valable au moins un an après sa sortie.
+        'version'       => env('LINKEDIN_VERSION', '202610'),
+    ],
+
 ];

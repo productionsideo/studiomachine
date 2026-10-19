@@ -195,6 +195,10 @@
                                                value="{{ $opt['titre'] ?? '' }}" data-compte data-max="100">
                                         <div class="compteur"></div>
                                     </div>
+                                    <div class="coches" style="margin-top:0">
+                                        {{-- Divulgation exigée par YouTube pour un contenu réaliste généré ou modifié par IA. --}}
+                                        <label><input type="checkbox" name="reseaux[youtube][options][ia]" value="1" @checked(! empty($opt['ia']))> Contenu réaliste généré ou modifié par IA</label>
+                                    </div>
                                 @endif
 
                                 @if($cle === 'tiktok')

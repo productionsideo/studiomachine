@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Integration;
 use App\Services\Connexion\FournisseurGoogle;
+use App\Services\Connexion\FournisseurLinkedin;
 use App\Services\Connexion\FournisseurMeta;
 use App\Services\Connexion\FournisseurOAuth;
 use App\Services\Connexion\FournisseurTiktok;
@@ -12,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 /**
- * « Connecter un compte » : l'aller-retour OAuth avec Meta, Google et TikTok.
+ * « Connecter un compte » : l'aller-retour OAuth avec Meta, Google, TikTok et LinkedIn.
  *
  * La partie commune vit ici :
  *   - l'état anti-falsification (un retour qui ne porte pas l'état qu'on a
@@ -30,9 +31,10 @@ class ConnexionController extends Controller
 {
     /** Le segment d'URL → la classe, et les réseaux qu'il branche. */
     private const FOURNISSEURS = [
-        'meta'    => [FournisseurMeta::class, ['facebook', 'instagram']],
-        'youtube' => [FournisseurGoogle::class, ['youtube']],
-        'tiktok'  => [FournisseurTiktok::class, ['tiktok']],
+        'meta'     => [FournisseurMeta::class, ['facebook', 'instagram']],
+        'youtube'  => [FournisseurGoogle::class, ['youtube']],
+        'tiktok'   => [FournisseurTiktok::class, ['tiktok']],
+        'linkedin' => [FournisseurLinkedin::class, ['linkedin']],
     ];
 
     public function rediriger(Request $request, Client $client, string $fournisseur)

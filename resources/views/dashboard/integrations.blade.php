@@ -11,7 +11,7 @@
 
 <div class="avis avis-info">
     <strong>Ces connexions ne dépendent pas seulement de nous.</strong>
-    Google Analytics se branche immédiatement. YouTube, Facebook, Instagram et TikTok exigent
+    Google Analytics se branche immédiatement. YouTube, Facebook, Instagram, TikTok et LinkedIn exigent
     d'abord une application développeur au nom de Studio Machine, et une approbation de la
     plateforme. Tant que ces démarches ne sont pas faites, les boutons ci-dessous restent inactifs —
     c'est volontaire : un bouton qui ne mène nulle part vaut moins qu'une explication.
@@ -71,6 +71,11 @@
                                     <span style="color:var(--encre-3);font-size:13px">
                                         — dernière collecte {{ $branchee->last_synced_at->diffForHumans() }}
                                     </span>
+                                @endif
+                                @if($branchee->token_expires_at && ! $branchee->refresh_token && $p['mode'] === 'oauth')
+                                    <div style="font-size:13px;margin-top:4px;{{ $branchee->token_expires_at->lt(now()->addDays(7)) ? 'color:var(--alerte);font-weight:600' : 'color:var(--encre-3)' }}">
+                                        Accès valide jusqu’au {{ $branchee->token_expires_at->timezone(config('publication.fuseau'))->translatedFormat('j F Y') }} — reconnecter avant cette date.
+                                    </div>
                                 @endif
                                 @if($branchee->last_error)
                                     <div class="erreur" style="display:block">{{ $branchee->last_error }}</div>
@@ -141,6 +146,10 @@
                         @elseif(in_array($cle, ['facebook', 'instagram']))
                             Créez une application sur <strong>developers.facebook.com</strong> (type Business),
                             lancez la vérification d'entreprise, puis transmettez l'App ID et l'App Secret.
+                        @elseif($cle === 'linkedin')
+                            Créez une application sur <strong>linkedin.com/developers</strong>, associée à la Page
+                            de Studio Machine, ajoutez les produits <em>Share on LinkedIn</em> et
+                            <em>Sign In with LinkedIn using OpenID Connect</em>, puis transmettez le Client ID et le secret.
                         @else
                             Créez une application sur <strong>developers.tiktok.com</strong> et demandez
                             l'accès aux commentaires, puis transmettez la clé et le secret client.
