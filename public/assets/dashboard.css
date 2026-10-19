@@ -476,6 +476,72 @@ textarea { min-height: 90px; resize: vertical; }
     .sem { overflow-x: auto; }
 }
 
+/* ---------- Résumé réseaux (tableau de bord façon Metricool) ---------- */
+.vue.pleine { max-width: none; }
+.section-resume { font-size: 17px; font-weight: 650; margin: 26px 0 10px; }
+.section-resume:first-of-type { margin-top: 8px; }
+.resume-panneau { padding: 0; }
+.bloc { padding: 18px 20px; border-bottom: 1px solid var(--trait); }
+.bloc:last-child { border-bottom: 0; }
+.bloc-tete { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .bloc-tete { grid-template-columns: 1fr; } }
+
+.tuile-total { background: var(--fond); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 12px 14px; }
+.tuile-total .etiquette { font-size: 12px; font-weight: 650; color: var(--encre-2); }
+.tuile-total .valeur { font-size: 30px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.15; margin-top: 2px; }
+.tendance { font-size: 12px; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+.repartition { display: flex; gap: 2px; height: 6px; margin: 10px 0 6px; border-radius: 3px; overflow: hidden; background: var(--trait); }
+.repartition span { min-width: 2px; }
+.sous-note { font-size: 11px; color: var(--encre-3); }
+
+.tuiles-reseaux { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 26px; }
+.tuile-reseau { border: 1px solid var(--trait); border-radius: var(--rayon); padding: 10px 12px; background: var(--surface); }
+.tuile-reseau-tete { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--encre-2); }
+.tuile-reseau .valeur { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.tuile-reseau .attente { font-size: 12px; color: var(--encre-3); margin-top: 6px; }
+
+.courbe { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: var(--h) 22px; height: calc(var(--h) + 22px); }
+.courbe.mini { grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--h); height: var(--h); margin-top: 6px; }
+.courbe-vide { grid-column: 1 / -1; display: grid; place-items: center; color: var(--encre-3); font-size: 13px; background: var(--fond); border-radius: 8px; }
+.courbe.mini .courbe-vide { background: none; font-size: 12px; place-items: center start; }
+.courbe-y { position: relative; height: var(--h); }
+.courbe-y span { position: absolute; right: 8px; transform: translateY(-50%); font-size: 11px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
+.courbe-zone { position: relative; height: var(--h); min-width: 0; cursor: crosshair; }
+.courbe.mini .courbe-zone { cursor: default; }
+.courbe-zone svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.courbe .grille { stroke: var(--trait); stroke-width: 1; }
+.courbe .trait { fill: none; stroke: var(--couleur); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.courbe .aire { fill: var(--couleur); opacity: .1; stroke: none; }
+.courbe .colonnes { position: absolute; inset: 0; display: flex; align-items: flex-end; }
+.courbe .colonnes span { flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 1px; }
+.courbe .colonnes i { display: block; width: 100%; max-width: 24px; background: var(--couleur); border-radius: 4px 4px 0 0; }
+.courbe.mini .colonnes i { border-radius: 2px 2px 0 0; }
+.courbe .point-fin { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--couleur); box-shadow: 0 0 0 2px var(--surface); transform: translate(-50%, -50%); pointer-events: none; }
+.courbe .curseur { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--encre-3); pointer-events: none; }
+.courbe .infobulle {
+    position: absolute; top: 0; transform: translateX(10px); z-index: 5; pointer-events: none;
+    background: var(--encre); color: #fff; font-size: 12px; line-height: 1.45; padding: 6px 9px; border-radius: 6px; white-space: nowrap;
+}
+.courbe .infobulle.gauche { transform: translateX(calc(-100% - 10px)); }
+.courbe .infobulle .detail { color: #d1d5db; }
+.courbe-x { grid-column: 2; position: relative; }
+.courbe-x span { position: absolute; top: 5px; transform: translateX(-50%); font-size: 11px; color: var(--encre-3); white-space: nowrap; }
+.courbe-x span:first-child { transform: none; }
+.courbe-x span:last-child { transform: translateX(-100%); }
+
+.liste-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.liste-tete h3 { font-size: 15px; }
+.liste-filtres { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.liste-filtres input[type=search] { width: 240px; }
+.liste-publications td { vertical-align: middle; }
+.pub-apercu { display: flex; align-items: center; gap: 10px; min-width: 260px; }
+.pub-apercu img, .pub-apercu .sans-vignette { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: var(--fond); }
+.pub-apercu:hover span { text-decoration: underline; }
+.pagination-resume { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; font-size: 13px; color: var(--encre-3); }
+.pagination-resume nav ul { display: flex; gap: 8px; list-style: none; }
+.vide { color: var(--encre-3); font-size: 14px; }
+.attente-pub { font-size: 14px; color: var(--encre-2); }
+
 /* ---------- Éditeur de publication ---------- */
 .editeur { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
 @media (max-width: 1100px) { .editeur { grid-template-columns: 1fr; } }

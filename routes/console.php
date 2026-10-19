@@ -32,3 +32,11 @@ Schedule::command('ga4:synchroniser')
 Schedule::call(fn () => \App\Services\Mediatheque::nettoyerCache())
     ->daily()
     ->name('medias:nettoyer-cache');
+
+// Statistiques des comptes (tableau de bord Résumé) : toutes les 6 heures.
+// Les réseaux limitent le nombre d'appels : inutile d'aller plus vite, leurs
+// chiffres du jour ne bougent guère plus souvent.
+Schedule::command('statistiques:collecter')
+    ->cron('20 */6 * * *')
+    ->withoutOverlapping(90)
+    ->appendOutputTo(storage_path('logs/statistiques.log'));

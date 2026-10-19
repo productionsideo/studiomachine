@@ -29,6 +29,9 @@
             <a href="{{ route('dashboard', $q) }}" @class(['on' => request()->routeIs('dashboard')])>
                 Tableau de bord
             </a>
+            <a href="{{ route('resume.index', $q) }}" @class(['on' => request()->routeIs('resume.*')])>
+                Résumé réseaux
+            </a>
             <a href="{{ route('leads.index', $q) }}" @class(['on' => request()->routeIs('leads.*')])>
                 Demandes
             </a>
@@ -92,7 +95,7 @@
         </div>
     </aside>
 
-    <main class="vue">
+    <main class="vue @yield('classe-vue')">
         @if(session('ok'))
             <div class="avis avis-ok">{{ session('ok') }}</div>
         @endif

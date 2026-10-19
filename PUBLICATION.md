@@ -109,3 +109,24 @@ Tout arrive en **brouillon**, après un aperçu (`ImportCsv::analyser`, sans éc
   YouTube ; texte simple sur Facebook et LinkedIn (pas d'identification par @pseudo via API).
   Instagram `collaborateurs` (3 max, pas en story) → paramètre `collaborators`.
 - Réimporter un CSV corrigé **met à jour** (même campagne, titre, moment) ce qui n'est pas parti.
+
+## Tableau de bord « Résumé réseaux »
+
+Menu **Résumé réseaux** (`/resume?client=…`), pleine largeur, lisible par le client.
+Sections : **Compte** (abonnés, vues), **Publications** (interactions, nombre, liste
+avec recherche, filtre, tri et export CSV), **Comptes publicitaires** (Meta Ads : à
+venir, exige `ads_read` et l'identifiant du compte publicitaire).
+
+- Collecte : `statistiques:collecter` toutes les 6 h (`20 */6 * * *`), ou le bouton
+  « Mettre à jour maintenant » (équipe). Tables `stats_comptes` (jour par jour) et
+  `stats_publications` (chiffres cumulés de chaque publication, faite ou non par /gestion).
+- Facebook : `followers_count`, `page_media_view` (vues), `page_post_engagements`,
+  `post_media_view` — chaque indicateur demandé seul (Meta en retire en 2026).
+- Instagram : `views`/`reach`/`total_interactions` jour par jour (31 jours d'historique),
+  insights par média. Abonnés : total du jour seulement (`follower_count` ne compte pas
+  les départs).
+- YouTube : totaux seulement (Data API) ; vues du jour = écart entre deux collectes.
+- TikTok, LinkedIn : tuiles « en attente d'accès » jusqu'aux approbations.
+- Forme des graphiques : courbe du **total** + une tuile par réseau (mini-courbe) — la
+  superposition de 5 réseaux échoue au contrôle de couleurs (daltonisme). Couleurs fixes :
+  `ResumeController::COULEURS`.

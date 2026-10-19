@@ -15,6 +15,7 @@ use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,11 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout')->mid
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Résumé des réseaux sociaux (façon Metricool) : le client consulte le sien.
+    Route::get('/resume',                  [ResumeController::class, 'index'])->name('resume.index');
+    Route::get('/resume/publications.csv', [ResumeController::class, 'exporter'])->name('resume.exporter');
+    Route::post('/resume/{client}/collecter', [ResumeController::class, 'collecter'])->middleware('admin')->name('resume.collecter');
 
     // Demandes reçues
     Route::get('/leads',              [LeadController::class, 'index'])->name('leads.index');
