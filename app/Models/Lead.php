@@ -13,7 +13,7 @@ class Lead extends Model
 
     protected function casts(): array
     {
-        return ['submitted_at' => 'datetime'];
+        return ['submitted_at' => 'datetime', 'montant' => 'decimal:2'];
     }
 
     public function client()  { return $this->belongsTo(Client::class); }
@@ -72,6 +72,18 @@ class Lead extends Model
         '2-ans'            => 'D’ici 2 ans',
         'exploration'      => 'S’informe seulement',
     ];
+
+    /** Le montant d'une vente, à la québécoise : « 24,99 $ ». Nul pour un formulaire. */
+    public function getMontantLabelAttribute(): ?string
+    {
+        if ($this->montant === null) {
+            return null;
+        }
+
+        $devise = $this->devise && $this->devise !== 'CAD' ? ' ' . $this->devise : '';
+
+        return number_format((float) $this->montant, 2, ',', ' ') . ' $' . $devise;
+    }
 
     /* Les libellés lisibles. Une clé inconnue (formulaire modifié depuis) est
        renvoyée telle quelle plutôt que masquée : mieux vaut afficher une valeur

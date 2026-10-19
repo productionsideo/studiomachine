@@ -23,6 +23,21 @@
 
 <div class="grille grille-2">
     <div class="panneau">
+        @if($lead->montant !== null)
+        <h2>L’achat</h2>
+        <div class="tableau-cadre">
+            <table>
+                <tbody>
+                <tr><th style="width:170px">Produit</th><td><strong>{{ $lead->produit ?: '—' }}</strong></td></tr>
+                <tr><th>Montant</th><td><strong style="color:var(--accent)">{{ $lead->montant_label }}</strong> <span class="pastille pastille-gagne">Payé</span></td></tr>
+                <tr><th>Commande</th><td>{{ $lead->external_id }}</td></tr>
+                @if($lead->message)
+                    <tr><th style="vertical-align:top">Note du client</th><td style="white-space:pre-wrap">{{ $lead->message }}</td></tr>
+                @endif
+                </tbody>
+            </table>
+        </div>
+        @else
         <h2>Le projet</h2>
         <div class="tableau-cadre">
             <table>
@@ -56,6 +71,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
 
         <h2 style="border-top:1px solid var(--trait)">Coordonnées</h2>
         <div class="tableau-cadre">

@@ -91,7 +91,8 @@ class IngestController extends Controller
     }
 
     /**
-     * Reçoit une demande complétée.
+     * Reçoit une demande complétée — ou une vente, quand le site envoie
+     * un montant (boutique WooCommerce de BJ21).
      *
      * L'écriture est idempotente sur (client_id, external_id) : si le site
      * client renvoie un lead parce qu'il n'a pas reçu notre accusé de
@@ -118,6 +119,9 @@ class IngestController extends Controller
             'financing'    => ['nullable', 'string', 'max:20'],
             'timeline'     => ['nullable', 'string', 'max:40'],
             'message'      => ['nullable', 'string', 'max:5000'],
+            'produit'      => ['nullable', 'string', 'max:255'],
+            'montant'      => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'devise'       => ['nullable', 'string', 'size:3'],
             'utm_source'   => ['nullable', 'string', 'max:100'],
             'utm_medium'   => ['nullable', 'string', 'max:100'],
             'utm_campaign' => ['nullable', 'string', 'max:100'],
@@ -153,6 +157,9 @@ class IngestController extends Controller
                 'financing'    => $data['financing'] ?? null,
                 'timeline'     => $data['timeline'] ?? null,
                 'message'      => $data['message'] ?? null,
+                'produit'      => $data['produit'] ?? null,
+                'montant'      => $data['montant'] ?? null,
+                'devise'       => isset($data['devise']) ? strtoupper($data['devise']) : null,
                 'utm_source'   => $data['utm_source'] ?? null,
                 'utm_medium'   => $data['utm_medium'] ?? null,
                 'utm_campaign' => $data['utm_campaign'] ?? null,
@@ -165,6 +172,12 @@ class IngestController extends Controller
                 'submitted_at' => $data['submitted_at'] ?? now(),
             ]
         );
+
+        // Une vente arrive déjà payée : elle entre comme « gagné ». Seulement à
+        // la création — un renvoi ne doit pas écraser le suivi fait depuis.
+        if ($lead->wasRecentlyCreated && $lead->montant !== null) {
+            $lead->update(['status' => 'gagne']);
+        }
 
         return response()->json([
             'ok'      => true,

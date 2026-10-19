@@ -21,8 +21,15 @@ class LeadController extends Controller
             ->paginate(30)
             ->withQueryString();
 
+        // Les colonnes suivent ce que le client envoie : un formulaire de
+        // projet (CRD) ou des ventes (BJ21). Inutile d'afficher « Budget »
+        // vide sur chaque ligne d'une boutique.
+        $ventes = $this->query($request)->whereNotNull('montant');
+
         return view('dashboard.leads', [
-            'leads'   => $leads,
+            'leads'      => $leads,
+            'avecProjet' => $this->query($request)->where(fn ($q) => $q->whereNotNull('project')->orWhereNotNull('budget')->orWhereNotNull('timeline'))->exists(),
+            'ventes'     => ['nombre' => (clone $ventes)->count(), 'total' => (float) (clone $ventes)->sum('montant')],
             'client'  => $this->resolveClient($request),
             'clients' => $request->user()->isAdmin() ? Client::orderBy('name')->get() : collect(),
             'statuts' => Lead::STATUSES,
@@ -71,7 +78,7 @@ class LeadController extends Controller
             fputcsv($out, [
                 'Date', 'Client', 'Nom', 'Courriel', 'Téléphone',
                 'Projet', 'Type', 'Chambres', 'Budget', 'Financement', 'Échéancier',
-                'Message', 'Capsule', 'Réseau', 'Source', 'Campagne', 'Appareil', 'Statut',
+                'Message', 'Produit', 'Montant', 'Devise', 'Capsule', 'Réseau', 'Source', 'Campagne', 'Appareil', 'Statut',
             ], ';');
 
             $query->chunk(500, function ($leads) use ($out) {
@@ -89,6 +96,9 @@ class LeadController extends Controller
                         $l->financing_label,
                         $l->timeline_label,
                         $l->message,
+                        $l->produit,
+                        $l->montant !== null ? number_format((float) $l->montant, 2, ',', '') : '',
+                        $l->devise,
                         $l->capsule?->number,
                         $l->platform,
                         $l->utm_source,

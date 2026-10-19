@@ -5,7 +5,11 @@
 <div class="tete">
     <div>
         <h1>Demandes</h1>
-        <p class="sous">{{ $leads->total() }} demande(s){{ $client ? ' — '.$client->name : '' }}</p>
+        <p class="sous">{{ $leads->total() }} demande(s){{ $client ? ' — '.$client->name : '' }}
+            @if($ventes['nombre'])
+                · {{ $ventes['nombre'] }} vente{{ $ventes['nombre'] > 1 ? 's' : '' }} pour <strong>{{ number_format($ventes['total'], 2, ',', ' ') }} $</strong>
+            @endif
+        </p>
     </div>
     <div class="outils">
         <a class="bouton-fin" href="{{ route('leads.export', request()->query()) }}">Exporter en CSV</a>
@@ -37,6 +41,7 @@
                 </select>
             </div>
 
+            @if($avecProjet)
             <div style="min-width:200px">
                 <label>Développement</label>
                 <select name="projet">
@@ -46,6 +51,7 @@
                     @endforeach
                 </select>
             </div>
+            @endif
 
             <div style="min-width:100px">
                 <label>Capsule n°</label>
@@ -73,7 +79,8 @@
                 <th>Reçue</th>
                 @if($clients->isNotEmpty())<th>Client</th>@endif
                 <th>Nom</th><th>Coordonnées</th>
-                <th>Développement</th><th>Budget</th><th>Financement</th><th>Échéancier</th>
+                @if($ventes['nombre'])<th>Achat</th>@endif
+                @if($avecProjet)<th>Développement</th><th>Budget</th><th>Financement</th><th>Échéancier</th>@endif
                 <th>Provenance</th><th>Statut</th>
             </tr>
             </thead>
@@ -92,6 +99,15 @@
                         {{ $l->phone ?: '—' }}<br>
                         <span style="color:var(--encre-3)">{{ $l->email }}</span>
                     </td>
+                    @if($ventes['nombre'])
+                        <td style="font-size:13px">
+                            @if($l->montant !== null)
+                                <strong>{{ $l->montant_label }}</strong><br>
+                                <span style="color:var(--encre-3)">{{ $l->produit ?: 'Vente' }}</span>
+                            @else — @endif
+                        </td>
+                    @endif
+                    @if($avecProjet)
                     <td style="font-size:13px">{{ $l->project_label ?: '—' }}</td>
                     <td>{{ $l->budget_label ?: '—' }}</td>
                     <td>
@@ -102,6 +118,7 @@
                         @endif
                     </td>
                     <td style="font-size:13px">{{ $l->timeline_label ?: '—' }}</td>
+                    @endif
                     <td style="font-size:13px">
                         @if($l->capsule)
                             <strong>#{{ $l->capsule->number }}</strong>
@@ -115,7 +132,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="vide">
+                    <td colspan="11" class="vide">
                         Aucune demande ne correspond.
                     </td>
                 </tr>
