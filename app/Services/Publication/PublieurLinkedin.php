@@ -5,11 +5,13 @@ namespace App\Services\Publication;
 use App\Models\MediaAsset;
 use App\Models\PostTarget;
 use App\Services\Connexion\FournisseurLinkedin;
+use App\Services\Connexion\FournisseurLinkedinProfil;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Publication sur LinkedIn (profil ou Page entreprise) par l'API Posts.
+ * Publication sur LinkedIn par l'API Posts : Page entreprise (« linkedin ») ou
+ * profil personnel (« linkedin_profil ») — même API, seul l'auteur change.
  *
  * Ce qui rend LinkedIn simple à fiabiliser : un média déposé n'est visible de
  * personne tant qu'aucune publication ne le cite. Tout ce qui précède l'appel
@@ -37,10 +39,7 @@ class PublieurLinkedin implements Publieur
     // fait les mots-clics.
     private const RESERVES = ['\\', '|', '{', '}', '@', '[', ']', '(', ')', '<', '>', '*', '_', '~'];
 
-    public function __construct(
-        private ClientLinkedin $api,
-        private FournisseurLinkedin $fournisseur,
-    ) {}
+    public function __construct(private ClientLinkedin $api) {}
 
     public function verifier(PostTarget $cible): array
     {
@@ -102,7 +101,7 @@ class PublieurLinkedin implements Publieur
         $integration = $cible->integration;
 
         try {
-            $this->fournisseur->rafraichirSiBesoin($integration);
+            $this->fournisseur($cible)->rafraichirSiBesoin($integration);
             $integration->refresh();
         } catch (\Throwable $e) {
             return Etape::echec($e->getMessage(), reessayable: ! str_contains($e->getMessage(), 'rebranché'));
@@ -143,7 +142,7 @@ class PublieurLinkedin implements Publieur
         $video       = $cible->external_job_id;
 
         try {
-            $this->fournisseur->rafraichirSiBesoin($integration);
+            $this->fournisseur($cible)->rafraichirSiBesoin($integration);
             $integration->refresh();
 
             $etat = $this->api->appeler($integration->access_token, 'get', '/videos/' . ClientLinkedin::urn($video));
@@ -283,6 +282,12 @@ class PublieurLinkedin implements Publieur
         ]], ['action' => 'finalizeUpload']);
 
         return $urn;
+    }
+
+    /** Chaque réseau a son application LinkedIn, donc ses propres identifiants de renouvellement. */
+    private function fournisseur(PostTarget $cible): FournisseurLinkedin
+    {
+        return app($cible->platform === 'linkedin_profil' ? FournisseurLinkedinProfil::class : FournisseurLinkedin::class);
     }
 
     private function auteur(PostTarget $cible): string

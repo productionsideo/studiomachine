@@ -55,17 +55,23 @@ return [
         'redirect'      => env('APP_URL') . '/integrations/tiktok/retour',
     ],
 
-    // Les permissions dépendent des produits accordés à l'application
-    // LinkedIn (voir FournisseurLinkedin) : profil personnel par défaut ;
-    // « w_organization_social r_organization_social rw_organization_admin »
-    // une fois la Community Management API approuvée, pour les Pages.
+    // LinkedIn impose deux applications (voir FournisseurLinkedin) : l'une
+    // pour les Pages entreprise (Community Management API, après examen),
+    // l'autre pour les profils personnels (libre-service).
     'linkedin' => [
-        'client_id'     => env('LINKEDIN_CLIENT_ID'),
-        'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        'client_id'     => env('LINKEDIN_PAGES_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_PAGES_CLIENT_SECRET'),
         'redirect'      => env('APP_URL') . '/integrations/linkedin/retour',
-        'scopes'        => env('LINKEDIN_SCOPES', 'openid profile w_member_social'),
+        'scopes'        => env('LINKEDIN_PAGES_SCOPES', 'w_organization_social rw_organization_admin'),
         // Version de l'API (AAAAMM), valable au moins un an après sa sortie.
         'version'       => env('LINKEDIN_VERSION', '202610'),
+    ],
+
+    'linkedin_profil' => [
+        'client_id'     => env('LINKEDIN_PROFIL_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_PROFIL_CLIENT_SECRET'),
+        'redirect'      => env('APP_URL') . '/integrations/linkedin-profil/retour',
+        'scopes'        => env('LINKEDIN_PROFIL_SCOPES', 'openid profile w_member_social'),
     ],
 
 ];

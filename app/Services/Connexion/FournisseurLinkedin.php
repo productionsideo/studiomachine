@@ -8,21 +8,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Branchement d'un compte LinkedIn : le profil d'une personne, ou une Page
- * entreprise qu'elle administre.
+ * Branchement d'une Page entreprise LinkedIn que la personne administre
+ * (réseau « linkedin »). Le profil personnel a son propre fournisseur,
+ * FournisseurLinkedinProfil, qui hérite de celui-ci.
  *
- * Deux produits LinkedIn, deux portées
- * ------------------------------------
- *   - « Share on LinkedIn » + « Sign In with LinkedIn using OpenID Connect »
- *     (openid profile w_member_social) : libre-service, immédiat, mais publie
- *     seulement sur le PROFIL de la personne qui se connecte.
- *   - « Community Management API » (w_organization_social
- *     r_organization_social rw_organization_admin) : publie sur les PAGES
- *     entreprise. Accordé après examen par LinkedIn, et sur une application
- *     où il est le seul produit.
- * Les permissions demandées viennent donc de LINKEDIN_SCOPES : demander une
- * permission que l'application n'a pas fait échouer toute la connexion. Le
- * code s'adapte à ce que LinkedIn accorde réellement.
+ * Deux applications LinkedIn, parce que LinkedIn l'impose
+ * -------------------------------------------------------
+ *   - Pages : « Community Management API » (w_organization_social
+ *     rw_organization_admin). Accordée après examen, à une organisation
+ *     enregistrée, et seule sur son application : d'où LINKEDIN_PAGES_*.
+ *   - Profils : « Share on LinkedIn » + « Sign In with LinkedIn using OpenID
+ *     Connect » (openid profile w_member_social). Libre-service, immédiat :
+ *     LINKEDIN_PROFIL_*.
+ * Demander une permission que l'application n'a pas fait échouer toute la
+ * connexion : chacune ne demande que les siennes (LINKEDIN_*_SCOPES).
  *
  * La durée des jetons
  * -------------------
@@ -33,21 +32,25 @@ use Illuminate\Support\Facades\Http;
  */
 class FournisseurLinkedin implements FournisseurOAuth
 {
+    /** La clé de configuration (config/services.php) et le réseau branché. */
+    protected const CONFIG     = 'linkedin';
+    protected const PLATEFORME = 'linkedin';
+
     private const OAUTH = 'https://www.linkedin.com/oauth/v2';
 
     /** Les rôles de Page qui permettent de publier au nom de l'entreprise. */
     private const ROLES_EDITEURS = ['ADMINISTRATOR', 'CONTENT_ADMINISTRATOR'];
 
-    public function __construct(private ClientLinkedin $api) {}
+    public function __construct(protected ClientLinkedin $api) {}
 
     public function urlAutorisation(string $etat, string $retour): string
     {
         return self::OAUTH . '/authorization?' . http_build_query([
             'response_type' => 'code',
-            'client_id'     => config('services.linkedin.client_id'),
+            'client_id'     => $this->config('client_id'),
             'redirect_uri'  => $retour,
             'state'         => $etat,
-            'scope'         => config('services.linkedin.scopes'),
+            'scope'         => $this->config('scopes'),
         ], '', '&', PHP_QUERY_RFC3986);
     }
 
@@ -68,53 +71,16 @@ class FournisseurLinkedin implements FournisseurOAuth
             'redirect_uri' => $retour,
         ]) ?? throw new \RuntimeException('LinkedIn a jugé le code d’autorisation invalide ou expiré. Recommencez le branchement.');
 
-        $accordees = $this->permissions($jetons['scope'] ?? config('services.linkedin.scopes'));
+        $accordees = $this->permissions($jetons['scope'] ?? $this->config('scopes'));
         $commun    = [
-            'platform'         => 'linkedin',
+            'platform'         => static::PLATEFORME,
             'access_token'     => $jetons['access_token'],
             'refresh_token'    => $jetons['refresh_token'] ?? null,
             'token_expires_at' => now()->addSeconds((int) ($jetons['expires_in'] ?? 60 * 86400)),
             'scopes'           => implode(',', $accordees),
         ];
 
-        $comptes = [];
-
-        if (in_array('w_member_social', $accordees, true) && in_array('openid', $accordees, true)) {
-            $moi = Http::timeout(20)->withToken($jetons['access_token'])->get('https://api.linkedin.com/v2/userinfo');
-
-            if ($moi->successful() && $moi->json('sub')) {
-                $urn = 'urn:li:person:' . $moi->json('sub');
-                $nom = $moi->json('name') ?: trim($moi->json('given_name') . ' ' . $moi->json('family_name'));
-
-                $comptes[] = $commun + [
-                    'groupe'              => $urn,
-                    'libelle'             => "{$nom}  ·  profil personnel",
-                    'external_account_id' => $urn,
-                    'account_name'        => $nom,
-                    'settings'            => ['auteur' => $urn, 'type' => 'membre'],
-                ];
-            }
-        }
-
-        if (in_array('w_organization_social', $accordees, true)) {
-            foreach ($this->pages($jetons['access_token']) as $urn => $nom) {
-                $comptes[] = $commun + [
-                    'groupe'              => $urn,
-                    'libelle'             => "{$nom}  ·  Page entreprise",
-                    'external_account_id' => $urn,
-                    'account_name'        => $nom,
-                    'settings'            => ['auteur' => $urn, 'type' => 'organisation'],
-                ];
-            }
-        }
-
-        if (! $comptes) {
-            throw new \RuntimeException(in_array('w_organization_social', $accordees, true)
-                ? 'Ce compte LinkedIn n’administre aucune Page entreprise (rôle Administrateur ou Administrateur de contenu requis).'
-                : 'LinkedIn n’a pas accordé la permission de publier (w_member_social). Vérifiez les produits de l’application LinkedIn.');
-        }
-
-        return $comptes;
+        return $this->comptes($jetons['access_token'], $accordees, $commun);
     }
 
     public function rafraichirSiBesoin(Integration $integration): void
@@ -141,9 +107,43 @@ class FournisseurLinkedin implements FournisseurOAuth
         ]));
     }
 
+    /**
+     * Les comptes que ce branchement ouvre : ici, les Pages où la personne
+     * peut publier.
+     */
+    protected function comptes(string $jeton, array $accordees, array $commun): array
+    {
+        if (! in_array('w_organization_social', $accordees, true)) {
+            throw new \RuntimeException('LinkedIn n’a pas accordé la permission de publier sur les Pages (w_organization_social). L’application Pages doit avoir la Community Management API.');
+        }
+
+        $comptes = [];
+
+        foreach ($this->pages($jeton) as $urn => $nom) {
+            $comptes[] = $commun + [
+                'groupe'              => $urn,
+                'libelle'             => "{$nom}  ·  Page entreprise",
+                'external_account_id' => $urn,
+                'account_name'        => $nom,
+                'settings'            => ['auteur' => $urn, 'type' => 'organisation'],
+            ];
+        }
+
+        if (! $comptes) {
+            throw new \RuntimeException('Ce compte LinkedIn n’administre aucune Page entreprise (rôle Administrateur ou Administrateur de contenu requis).');
+        }
+
+        return $comptes;
+    }
+
     // =====================================================================
     // Plomberie
     // =====================================================================
+
+    protected function config(string $cle): mixed
+    {
+        return config('services.' . static::CONFIG . '.' . $cle);
+    }
 
     /**
      * Les Pages où la personne peut publier : urn => nom.
@@ -198,8 +198,8 @@ class FournisseurLinkedin implements FournisseurOAuth
     private function demanderJetons(array $params): ?array
     {
         $reponse = Http::timeout(20)->asForm()->post(self::OAUTH . '/accessToken', $params + [
-            'client_id'     => config('services.linkedin.client_id'),
-            'client_secret' => config('services.linkedin.client_secret'),
+            'client_id'     => $this->config('client_id'),
+            'client_secret' => $this->config('client_secret'),
         ]);
 
         $corps = $reponse->json() ?? [];

@@ -8,6 +8,7 @@ use App\Models\MediaAsset;
 use App\Models\Post;
 use App\Models\PostTarget;
 use App\Services\Connexion\FournisseurLinkedin;
+use App\Services\Connexion\FournisseurLinkedinProfil;
 use App\Services\Publication\PublieurLinkedin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -150,7 +151,7 @@ class LinkedinTest extends TestCase
 
     public function test_la_connexion_d_un_profil_donne_son_urn_et_la_date_limite(): void
     {
-        config(['services.linkedin.client_id' => 'id', 'services.linkedin.client_secret' => 'secret']);
+        config(['services.linkedin_profil.client_id' => 'id-profil', 'services.linkedin_profil.client_secret' => 'secret']);
 
         Http::fake([
             'www.linkedin.com/oauth/v2/accessToken' => Http::response([
@@ -159,16 +160,65 @@ class LinkedinTest extends TestCase
             'api.linkedin.com/v2/userinfo' => Http::response(['sub' => 'abC123', 'name' => 'Bruno Essai']),
         ]);
 
+        $comptes = app(FournisseurLinkedinProfil::class)->recevoir(
+            \Illuminate\Http\Request::create('/retour', 'GET', ['code' => 'c', 'state' => 's']),
+            'https://studiomachine.ca/gestion/integrations/linkedin-profil/retour',
+        );
+
+        $this->assertCount(1, $comptes);
+        $this->assertSame('linkedin_profil', $comptes[0]['platform']);
+        $this->assertSame('urn:li:person:abC123', $comptes[0]['external_account_id']);
+        $this->assertSame('Bruno Essai', $comptes[0]['account_name']);
+        $this->assertNull($comptes[0]['refresh_token']);
+        $this->assertTrue($comptes[0]['token_expires_at']->between(now()->addDays(59), now()->addDays(61)));
+
+        // Les identifiants de l'application Profils, pas ceux des Pages.
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'accessToken') && $r['client_id'] === 'id-profil');
+    }
+
+    public function test_la_connexion_des_pages_ne_garde_que_celles_ou_l_on_peut_publier(): void
+    {
+        config(['services.linkedin.client_id' => 'id-pages', 'services.linkedin.client_secret' => 'secret']);
+
+        Http::fake([
+            'www.linkedin.com/oauth/v2/accessToken' => Http::response([
+                'access_token' => 'jeton', 'expires_in' => 5184000, 'refresh_token' => 'renouv',
+                'scope' => 'w_organization_social,rw_organization_admin',
+            ]),
+            'api.linkedin.com/rest/organizationAcls*' => Http::response(['elements' => [
+                ['role' => 'ADMINISTRATOR', 'organization' => 'urn:li:organization:1', 'state' => 'APPROVED'],
+                ['role' => 'ANALYST', 'organization' => 'urn:li:organization:2', 'state' => 'APPROVED'],
+                ['role' => 'CONTENT_ADMINISTRATOR', 'organizationTarget' => 'urn:li:organization:3', 'state' => 'APPROVED'],
+            ]]),
+            'api.linkedin.com/rest/organizations/1' => Http::response(['localizedName' => 'Productions IDEO']),
+            'api.linkedin.com/rest/organizations/3' => Http::response(['localizedName' => 'BJ21']),
+        ]);
+
         $comptes = app(FournisseurLinkedin::class)->recevoir(
             \Illuminate\Http\Request::create('/retour', 'GET', ['code' => 'c', 'state' => 's']),
             'https://studiomachine.ca/gestion/integrations/linkedin/retour',
         );
 
-        $this->assertCount(1, $comptes);
-        $this->assertSame('urn:li:person:abC123', $comptes[0]['external_account_id']);
-        $this->assertSame('Bruno Essai', $comptes[0]['account_name']);
-        $this->assertNull($comptes[0]['refresh_token']);
-        $this->assertTrue($comptes[0]['token_expires_at']->between(now()->addDays(59), now()->addDays(61)));
+        $this->assertSame(['urn:li:organization:1', 'urn:li:organization:3'], array_column($comptes, 'external_account_id'));
+        $this->assertSame(['Productions IDEO', 'BJ21'], array_column($comptes, 'account_name'));
+        $this->assertSame('linkedin', $comptes[0]['platform']);
+        $this->assertSame('renouv', $comptes[0]['refresh_token']);
+    }
+
+    public function test_un_profil_publie_en_son_nom(): void
+    {
+        $this->cible->integration->update([
+            'platform' => 'linkedin_profil', 'external_account_id' => 'urn:li:person:abC123',
+            'settings' => ['auteur' => 'urn:li:person:abC123', 'type' => 'membre'],
+        ]);
+        $this->cible->update(['platform' => 'linkedin_profil']);
+
+        Http::fake(['api.linkedin.com/rest/posts' => Http::response('', 201, ['x-restli-id' => 'urn:li:share:5'])]);
+
+        $etape = app(PublieurLinkedin::class)->demarrer($this->cible->fresh());
+
+        $this->assertSame('publiee', $etape->issue);
+        Http::assertSent(fn (Request $r) => $r['author'] === 'urn:li:person:abC123');
     }
 
     public function test_sans_jeton_de_renouvellement_un_acces_expire_demande_un_rebranchement(): void

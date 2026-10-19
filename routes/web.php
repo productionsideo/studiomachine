@@ -55,9 +55,9 @@ Route::middleware('auth')->group(function () {
     // Connexion d'un compte par OAuth (Meta, Google, TikTok, LinkedIn). Le client peut
     // brancher ses propres comptes ; publier reste réservé à l'équipe.
     Route::get('/integrations/{client}/connecter/{fournisseur}', [ConnexionController::class, 'rediriger'])
-        ->where('fournisseur', 'meta|youtube|tiktok|linkedin')->name('connexion.rediriger');
+        ->where('fournisseur', 'meta|youtube|tiktok|linkedin|linkedin-profil')->name('connexion.rediriger');
     Route::get('/integrations/{fournisseur}/retour', [ConnexionController::class, 'retour'])
-        ->where('fournisseur', 'meta|youtube|tiktok|linkedin')->name('connexion.retour');
+        ->where('fournisseur', 'meta|youtube|tiktok|linkedin|linkedin-profil')->name('connexion.retour');
     Route::post('/integrations/choisir', [ConnexionController::class, 'choisir'])->name('connexion.choisir');
 
     // Publication — rédiger et programmer : l'équipe seulement.

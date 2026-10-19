@@ -67,12 +67,20 @@ class IntegrationController extends Controller
             'delai'      => 'Revue de l’app : quelques jours à deux semaines ; audit de publication en plus.',
         ],
         'linkedin' => [
-            'nom'        => 'LinkedIn',
+            'nom'        => 'LinkedIn – Page entreprise',
             'mode'       => 'oauth',
             'approbation'=> true,
-            'donne'      => 'Publication (texte, images, vidéos) sur un profil ou une Page entreprise.',
-            'exige'      => 'Une application LinkedIn associée à la Page de Studio Machine. Le profil personnel se publie tout de suite (produits « Share on LinkedIn » et « Sign In with OpenID Connect ») ; les Pages entreprise des clients exigent la Community Management API, accordée après examen. Sans elle, l’accès expire au bout de 60 jours et le compte doit être rebranché.',
-            'delai'      => 'Profil : immédiat. Pages entreprise : examen LinkedIn, de quelques jours à quelques semaines.',
+            'donne'      => 'Publication (texte, images, vidéos) sur la Page entreprise du client.',
+            'exige'      => 'L’application LinkedIn « Pages » de Studio Machine avec la Community Management API, accordée après examen à une organisation enregistrée. La personne qui se connecte doit être Administrateur ou Administrateur de contenu de la Page.',
+            'delai'      => 'Examen LinkedIn : de quelques jours à quelques semaines, puis palier Standard (vidéo de démonstration).',
+        ],
+        'linkedin_profil' => [
+            'nom'        => 'LinkedIn – profil',
+            'mode'       => 'oauth',
+            'approbation'=> false,
+            'donne'      => 'Publication (texte, images, vidéos) sur le profil personnel de la personne qui se connecte : dirigeant, porte-parole.',
+            'exige'      => 'L’application LinkedIn « Profils » de Studio Machine (Share on LinkedIn + Sign In with OpenID Connect). L’accès dure 60 jours : reconnecter avant l’échéance, affichée ci-dessous.',
+            'delai'      => 'Immédiat — aucune approbation.',
         ],
     ];
 
@@ -156,7 +164,7 @@ class IntegrationController extends Controller
     {
         $configurees = [];
 
-        foreach (['youtube' => 'google', 'facebook' => 'meta', 'instagram' => 'meta', 'tiktok' => 'tiktok', 'linkedin' => 'linkedin'] as $plateforme => $fournisseur) {
+        foreach (['youtube' => 'google', 'facebook' => 'meta', 'instagram' => 'meta', 'tiktok' => 'tiktok', 'linkedin' => 'linkedin', 'linkedin_profil' => 'linkedin_profil'] as $plateforme => $fournisseur) {
             if (config("services.{$fournisseur}.client_id")) {
                 $configurees[] = $plateforme;
             }

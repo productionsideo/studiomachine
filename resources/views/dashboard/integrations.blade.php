@@ -21,7 +21,7 @@
     @php
         $branchee    = $branchees[$cle] ?? null;
         $configuree  = in_array($cle, $configurees, true);
-        $fournisseur = match ($cle) { 'facebook', 'instagram' => 'meta', default => $cle };
+        $fournisseur = match ($cle) { 'facebook', 'instagram' => 'meta', 'linkedin_profil' => 'linkedin-profil', default => $cle };
     @endphp
 
     <div class="panneau" style="margin-bottom:16px">
@@ -147,9 +147,13 @@
                             Créez une application sur <strong>developers.facebook.com</strong> (type Business),
                             lancez la vérification d'entreprise, puis transmettez l'App ID et l'App Secret.
                         @elseif($cle === 'linkedin')
-                            Créez une application sur <strong>linkedin.com/developers</strong>, associée à la Page
-                            de Studio Machine, ajoutez les produits <em>Share on LinkedIn</em> et
-                            <em>Sign In with LinkedIn using OpenID Connect</em>, puis transmettez le Client ID et le secret.
+                            Créez l’application « Pages » sur <strong>linkedin.com/developers</strong>, associée à la Page
+                            de Studio Machine, demandez la <em>Community Management API</em>, puis renseignez
+                            <code>LINKEDIN_PAGES_CLIENT_ID</code> et <code>LINKEDIN_PAGES_CLIENT_SECRET</code>.
+                        @elseif($cle === 'linkedin_profil')
+                            Créez l’application « Profils » sur <strong>linkedin.com/developers</strong>, ajoutez
+                            <em>Share on LinkedIn</em> et <em>Sign In with LinkedIn using OpenID Connect</em>, puis renseignez
+                            <code>LINKEDIN_PROFIL_CLIENT_ID</code> et <code>LINKEDIN_PROFIL_CLIENT_SECRET</code>.
                         @else
                             Créez une application sur <strong>developers.tiktok.com</strong> et demandez
                             l'accès aux commentaires, puis transmettez la clé et le secret client.

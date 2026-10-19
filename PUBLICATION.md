@@ -59,7 +59,7 @@ php artisan config:clear && php artisan view:clear
 La synchronisation des commentaires reste à 15 minutes (`routes/console.php`).
 
 **.env** — ajouter au besoin : `META_LOGIN_CONFIG_ID`, `GOOGLE_CLIENT_ID/SECRET`,
-`TIKTOK_CLIENT_KEY/SECRET`, `LINKEDIN_CLIENT_ID/SECRET` (+ `LINKEDIN_SCOPES`, `LINKEDIN_VERSION`). `MEDIAS_URL` vaut par défaut `APP_URL/fichiers`.
+`TIKTOK_CLIENT_KEY/SECRET`, `LINKEDIN_PAGES_CLIENT_ID/SECRET` et `LINKEDIN_PROFIL_CLIENT_ID/SECRET` (+ `LINKEDIN_VERSION`). `MEDIAS_URL` vaut par défaut `APP_URL/fichiers`.
 
 ## Ce qui ne dépend pas du code : les approbations
 
@@ -70,14 +70,15 @@ Vérifié sur la documentation officielle le 2026-09-30.
 | **Meta** | Accès standard : seulement les comptes ayant un rôle sur l'app | Vérification d'entreprise + App Review (accès avancé) de `pages_manage_posts`, `publish_video`, `instagram_content_publish`, etc. Un screencast par permission |
 | **YouTube** | Les vidéos envoyées par l'API sont **forcées en privé** | Vérification de l'écran de consentement + *Audit and Quota Extension Form*. Quota par défaut : 100 mises en ligne / jour |
 | **TikTok** | Publication **privée** seulement, 5 comptes / 24 h | Revue de l'app (quelques jours à 2 semaines) + audit Content Posting. L'interface de l'éditeur respecte déjà leurs règles (confidentialité sans défaut, interactions décochées, divulgation commerciale, consentement musical) |
-| **LinkedIn** | Profil personnel seulement (« Share on LinkedIn » + « Sign In with OpenID Connect », libre-service). Jeton de 60 jours, sans renouvellement : rebrancher avant l'échéance (date affichée dans Intégrations) | Pages entreprise : **Community Management API**, sur une app où c'est le seul produit, après examen. Donne aussi un jeton de renouvellement d'un an. Puis `LINKEDIN_SCOPES="w_organization_social r_organization_social rw_organization_admin"` |
+| **LinkedIn** | Deux réseaux, deux applications (LinkedIn n'accepte la Community Management API que seule sur son app). **Profil** (`linkedin_profil`, app « Profils » : Share on LinkedIn + OpenID Connect) : immédiat, jeton de 60 jours sans renouvellement, date limite affichée dans Intégrations | **Page entreprise** (`linkedin`, app « Pages ») : Community Management API, réservée aux organisations enregistrées (courriel d'entreprise, app vérifiée par un super-admin de la Page). Palier Development (500 appels/jour), puis Standard après une vidéo de démonstration. Jeton de renouvellement d'un an |
 
 URL de retour OAuth à déclarer chez chaque fournisseur :
 
 - `https://studiomachine.ca/gestion/integrations/meta/retour`
 - `https://studiomachine.ca/gestion/integrations/youtube/retour`
 - `https://studiomachine.ca/gestion/integrations/tiktok/retour`
-- `https://studiomachine.ca/gestion/integrations/linkedin/retour`
+- `https://studiomachine.ca/gestion/integrations/linkedin/retour` (app Pages)
+- `https://studiomachine.ca/gestion/integrations/linkedin-profil/retour` (app Profils)
 
 ## Limites connues / à faire
 

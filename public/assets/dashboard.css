@@ -195,6 +195,7 @@ tbody tr:hover { background: var(--fond); }
 .point-instagram { background: #d62976; }
 .point-youtube   { background: #ff0000; }
 .point-linkedin  { background: #0a66c2; }
+.point-linkedin_profil { background: #0a66c2; }
 .point-direct    { background: var(--encre-3); }
 
 /* Barre de proportion dans un tableau */

@@ -39,9 +39,15 @@ final class Reseaux
             'texte_max'=> 2200,
         ],
         'linkedin' => [
-            'nom'      => 'LinkedIn',
+            'nom'      => 'LinkedIn – Page',
             'publieur' => PublieurLinkedin::class,
             // Texte, image(s) ou vidéo : le contenu se déduit des médias joints.
+            'formats'  => ['post' => 'Publication'],
+            'texte_max'=> 3000,
+        ],
+        'linkedin_profil' => [
+            'nom'      => 'LinkedIn – profil',
+            'publieur' => PublieurLinkedin::class,
             'formats'  => ['post' => 'Publication'],
             'texte_max'=> 3000,
         ],

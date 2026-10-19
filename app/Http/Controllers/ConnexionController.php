@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Integration;
 use App\Services\Connexion\FournisseurGoogle;
 use App\Services\Connexion\FournisseurLinkedin;
+use App\Services\Connexion\FournisseurLinkedinProfil;
 use App\Services\Connexion\FournisseurMeta;
 use App\Services\Connexion\FournisseurOAuth;
 use App\Services\Connexion\FournisseurTiktok;
@@ -31,10 +32,17 @@ class ConnexionController extends Controller
 {
     /** Le segment d'URL → la classe, et les réseaux qu'il branche. */
     private const FOURNISSEURS = [
-        'meta'     => [FournisseurMeta::class, ['facebook', 'instagram']],
-        'youtube'  => [FournisseurGoogle::class, ['youtube']],
-        'tiktok'   => [FournisseurTiktok::class, ['tiktok']],
-        'linkedin' => [FournisseurLinkedin::class, ['linkedin']],
+        'meta'            => [FournisseurMeta::class, ['facebook', 'instagram']],
+        'youtube'         => [FournisseurGoogle::class, ['youtube']],
+        'tiktok'          => [FournisseurTiktok::class, ['tiktok']],
+        'linkedin'        => [FournisseurLinkedin::class, ['linkedin']],
+        'linkedin-profil' => [FournisseurLinkedinProfil::class, ['linkedin_profil']],
+    ];
+
+    /** Le segment d'URL → sa clé dans config/services.php, quand elles diffèrent. */
+    private const CONFIGS = [
+        'youtube'         => 'google',
+        'linkedin-profil' => 'linkedin_profil',
     ];
 
     public function rediriger(Request $request, Client $client, string $fournisseur)
@@ -42,7 +50,7 @@ class ConnexionController extends Controller
         abort_unless($request->user()->canAccessClient($client->id), 403);
         abort_unless(isset(self::FOURNISSEURS[$fournisseur]), 404);
 
-        $cle = $fournisseur === 'youtube' ? 'google' : $fournisseur;
+        $cle = self::CONFIGS[$fournisseur] ?? $fournisseur;
 
         if (! config("services.{$cle}.client_id")) {
             return back()->with('ok', 'L’application développeur n’est pas encore configurée sur le serveur pour ce réseau.');
@@ -75,7 +83,7 @@ class ConnexionController extends Controller
         $client = Client::findOrFail($attendu['client_id']);
         abort_unless($request->user()->canAccessClient($client->id), 403);
 
-        $cle = $fournisseur === 'youtube' ? 'google' : $fournisseur;
+        $cle = self::CONFIGS[$fournisseur] ?? $fournisseur;
 
         try {
             $comptes = $this->fournisseur($fournisseur)->recevoir($request, config("services.{$cle}.redirect"));
