@@ -113,7 +113,7 @@
                             </span>
                             <span class="sem-carte-pied">
                                 @if($vign) <img src="{{ $vign }}" alt="" loading="lazy"> @endif
-                                <span class="etat">{{ Post::STATUTS[$p->status] }}</span>
+                                <span class="etat">{{ $p->fichiersAttendus->isNotEmpty() ? '⏳ fichier attendu' : Post::STATUTS[$p->status] }}</span>
                             </span>
                         </a>
                     @endforeach

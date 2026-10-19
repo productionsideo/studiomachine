@@ -33,6 +33,14 @@
     </div>
 </div>
 
+@if($post->fichiersAttendus->isNotEmpty())
+    <div class="avis avis-garde">
+        <strong>En attente de fichier :</strong>
+        @foreach($post->fichiersAttendus as $a) <code>{{ $a->nom }}</code>{{ $a->role === 'miniature' ? ' (miniature)' : '' }}@if(! $loop->last), @endif @endforeach.
+        Déposez-le dans la <a href="{{ route('medias.index', ['client' => $post->client->slug]) }}"><u>Médiathèque</u></a> sous ce nom : il se rattachera tout seul.
+    </div>
+@endif
+
 <div class="grille grille-2">
     <div class="panneau">
         <h2>Réseaux</h2>

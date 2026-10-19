@@ -124,6 +124,27 @@
                         @endforeach
                     </div>
 
+                    @php $attendus = $post->exists ? $post->fichiersAttendus : collect(); @endphp
+                    @if($attendus->isNotEmpty())
+                        <div class="avis avis-garde" style="margin:12px 0 0">
+                            <strong>En attente de fichier{{ $attendus->count() > 1 ? 's' : '' }} :</strong>
+                            @foreach($attendus as $a) <code>{{ $a->nom }}</code>{{ $a->role === 'miniature' ? ' (miniature)' : '' }}@if(! $loop->last), @endif @endforeach.
+                            Déposez {{ $attendus->count() > 1 ? 'ces fichiers' : 'ce fichier' }} (ici ou dans la Médiathèque) sous le même nom : il se rattachera tout seul.
+                            La publication ne peut pas être programmée avant.
+                        </div>
+                    @endif
+
+                    @php $images = $medias->reject->isVideo(); $coverId = (int) old('cover_media_id', $post->cover_media_id); @endphp
+                    <div class="champ" style="margin-top:12px">
+                        <label for="cover_media_id">Miniature de la vidéo <span style="font-weight:400;color:var(--encre-3)">(YouTube, Reels Instagram et Facebook, LinkedIn — TikTok n’en accepte pas)</span></label>
+                        <select id="cover_media_id" name="cover_media_id">
+                            <option value="">— Image tirée de la vidéo par le réseau —</option>
+                            @foreach($images as $m)
+                                <option value="{{ $m->id }}" @selected($coverId === $m->id)>{{ $m->original_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="depot" id="depot" style="margin-top:12px">
                         Glissez des images ou vidéos ici, ou <u>parcourez</u>
                         <input type="file" id="fichier" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" hidden>
@@ -198,6 +219,14 @@
                                     <div class="coches" style="margin-top:0">
                                         {{-- Divulgation exigée par YouTube pour un contenu réaliste généré ou modifié par IA. --}}
                                         <label><input type="checkbox" name="reseaux[youtube][options][ia]" value="1" @checked(! empty($opt['ia']))> Contenu réaliste généré ou modifié par IA</label>
+                                    </div>
+                                @endif
+
+                                @if($cle === 'instagram')
+                                    <div class="champ">
+                                        <label>Collaborateurs <span style="font-weight:400;color:var(--encre-3)">(jusqu’à 3 comptes, sauf story)</span></label>
+                                        <input type="text" name="reseaux[instagram][options][collaborateurs]" placeholder="compte1 compte2"
+                                               value="{{ is_array($opt['collaborateurs'] ?? null) ? implode(' ', $opt['collaborateurs']) : ($opt['collaborateurs'] ?? '') }}">
                                     </div>
                                 @endif
 

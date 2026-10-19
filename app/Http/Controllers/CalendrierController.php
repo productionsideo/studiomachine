@@ -58,7 +58,7 @@ class CalendrierController extends Controller
         $posts = Post::query()
             ->when($client, fn ($q) => $q->where('client_id', $client->id))
             ->whereBetween('scheduled_at', [$debut->copy()->utc(), $fin->copy()->utc()])
-            ->with('targets', 'campaign', 'client', 'media')
+            ->with('targets', 'campaign', 'client', 'media', 'fichiersAttendus')
             ->orderBy('scheduled_at')
             ->get()
             ->groupBy(fn ($p) => $p->heureLocale()->toDateString());

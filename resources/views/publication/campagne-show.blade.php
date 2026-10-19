@@ -16,6 +16,7 @@
     @if($admin)
         <div class="outils">
             <a class="bouton-fin" href="{{ route('campaigns.edit', $campaign) }}">Modifier</a>
+            <a class="bouton-fin" href="{{ route('campaigns.import', $campaign) }}">Importer un CSV</a>
             <a class="bouton bouton-accent" href="{{ route('posts.create', ['client' => $campaign->client->slug, 'campagne' => $campaign->id]) }}">Ajouter une publication</a>
         </div>
     @endif

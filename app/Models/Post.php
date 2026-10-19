@@ -26,6 +26,10 @@ class Post extends Model
     public function campaign() { return $this->belongsTo(Campaign::class); }
     public function auteur()   { return $this->belongsTo(User::class, 'created_by'); }
     public function targets()  { return $this->hasMany(PostTarget::class); }
+    public function cover()    { return $this->belongsTo(MediaAsset::class, 'cover_media_id'); }
+
+    /** Les fichiers nommés à l'import qui ne sont pas encore dans la médiathèque. */
+    public function fichiersAttendus() { return $this->hasMany(FichierAttendu::class)->orderBy('role')->orderBy('position'); }
 
     public function media()
     {

@@ -4,6 +4,7 @@ namespace App\Services\Publication;
 
 use App\Models\PostTarget;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Publication sur une Page Facebook : publication classique (texte, lien,
@@ -142,7 +143,38 @@ class PublieurFacebook implements Publieur
             $lien = 'https://www.facebook.com' . $lien;
         }
 
+        $this->miniature($cible, $jeton);
+
         return Etape::publiee($cible->external_job_id, $lien);
+    }
+
+    /**
+     * La miniature choisie, posée sur la vidéo une fois publiée. Meta ne
+     * documente cet appel que pour les vidéos de Page ; pour un Reel, c'est
+     * un essai. Un refus ne change rien à la publication : on le note.
+     */
+    private function miniature(PostTarget $cible, string $jeton): void
+    {
+        $image = $cible->post->cover;
+
+        if (! $image) {
+            return;
+        }
+
+        try {
+            $reponse = Http::timeout(60)
+                ->attach('source', file_get_contents($image->fichierLocal()), 'miniature.' . ($image->mime === 'image/png' ? 'png' : 'jpg'))
+                ->post($this->graphe->base() . "/{$cible->external_job_id}/thumbnails", [
+                    'is_preferred' => 'true',
+                    'access_token' => $jeton,
+                ]);
+
+            if (! ($reponse->json('success') ?? false)) {
+                Log::warning("Miniature Facebook refusée pour {$cible->external_job_id} : " . ($reponse->json('error.message') ?? "HTTP {$reponse->status()}"));
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Miniature Facebook non envoyée pour {$cible->external_job_id} : " . $e->getMessage());
+        }
     }
 
     /**

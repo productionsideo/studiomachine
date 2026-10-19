@@ -13,6 +13,20 @@ class MediaAsset extends Model
         return ['duration_seconds' => 'float'];
     }
 
+    protected static function booted(): void
+    {
+        // Un média qui arrive peut être attendu par une publication importée
+        // en CSV : on le lui rattache aussitôt. Un échec ici ne doit jamais
+        // faire échouer l'envoi du fichier lui-même.
+        static::created(function (MediaAsset $media) {
+            try {
+                app(\App\Services\Publication\FichiersAttendus::class)->rattacher($media);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
+
     public function client() { return $this->belongsTo(Client::class); }
     public function posts()  { return $this->belongsToMany(Post::class, 'post_media'); }
 

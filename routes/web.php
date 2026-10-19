@@ -4,6 +4,7 @@ use App\Http\Controllers\AnalytiqueController;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CalendrierController;
+use App\Http\Controllers\CampagneImportController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CapsuleController;
 use App\Http\Controllers\ClientController;
@@ -77,6 +78,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/campagnes/{campaign}/modifier', [CampaignController::class, 'edit'])->name('campaigns.edit');
         Route::patch('/campagnes/{campaign}',        [CampaignController::class, 'update'])->name('campaigns.update');
         Route::delete('/campagnes/{campaign}',       [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+        Route::get('/campagnes/gabarit.csv',                 [CampagneImportController::class, 'gabarit'])->name('campaigns.gabarit');
+        Route::get('/campagnes/{campaign}/importer',         [CampagneImportController::class, 'formulaire'])->name('campaigns.import');
+        Route::post('/campagnes/{campaign}/importer',        [CampagneImportController::class, 'apercu'])->name('campaigns.import.apercu');
+        Route::post('/campagnes/{campaign}/importer/confirmer', [CampagneImportController::class, 'confirmer'])->name('campaigns.import.confirmer');
 
         // Les morceaux d'un gros fichier arrivent l'un après l'autre : le
         // plafond de débit doit laisser passer une vidéo de 1 Go (128 morceaux).

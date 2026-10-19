@@ -89,3 +89,23 @@ URL de retour OAuth à déclarer chez chaque fournisseur :
   (`content_publishing_limit`) — Meta refusera au-delà, l'échec sera visible.
 - Facebook vidéo (non-Reel) via `file_url` : paramètre largement utilisé mais non
   confirmé sur la page de doc actuelle.
+
+## Import d'une campagne en CSV
+
+Campagne → **Importer un CSV** (gabarit téléchargeable sur la même page). Une ligne par
+publication **et par réseau** ; les lignes au même moment, avec le même titre et les mêmes
+fichiers, forment une seule publication à plusieurs réseaux (colonne `groupe` pour forcer).
+Tout arrive en **brouillon**, après un aperçu (`ImportCsv::analyser`, sans écriture).
+
+- **Fichiers** (`video`, `images` séparées par `|`, `miniature`) : pris dans la médiathèque
+  s'ils y sont, sinon notés dans `post_fichiers_attendus` et rattachés **au dépôt** d'un
+  fichier du même nom (sans casse ni dossier) — `MediaAsset::created` → `FichiersAttendus`.
+  Une publication qui attend un fichier ne peut pas être programmée.
+- **Miniature** (`posts.cover_media_id`) : YouTube `thumbnails/set` après l'envoi, Reels
+  Instagram `cover_url`, Facebook `/{vidéo}/thumbnails` (documenté pour les vidéos de Page,
+  essai pour les Reels), LinkedIn `uploadThumbnail`. TikTok : non pris en charge par l'API.
+  Un refus de miniature ne fait jamais échouer la publication (journal `Log::warning`).
+- **Mentions / hashtags** : ajoutés au texte de chaque réseau. Liens sur Instagram, TikTok,
+  YouTube ; texte simple sur Facebook et LinkedIn (pas d'identification par @pseudo via API).
+  Instagram `collaborateurs` (3 max, pas en story) → paramètre `collaborators`.
+- Réimporter un CSV corrigé **met à jour** (même campagne, titre, moment) ce qui n'est pas parti.

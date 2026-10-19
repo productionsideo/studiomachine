@@ -119,11 +119,13 @@ class PublieurInstagram implements Publieur
             $m = $medias->first();
 
             $params = match ($cible->format) {
-                'reel'  => ['media_type' => 'REELS', 'video_url' => $m->url(), 'caption' => $texte, 'share_to_feed' => 'true'],
+                // cover_url : la couverture du Reel (onglet Reels et grille), si une miniature est choisie.
+                'reel'  => array_filter(['media_type' => 'REELS', 'video_url' => $m->url(), 'caption' => $texte, 'share_to_feed' => 'true', 'cover_url' => $cible->post->cover?->url()])
+                    + $this->collaborateurs($cible),
                 'story' => $m->isVideo()
                     ? ['media_type' => 'STORIES', 'video_url' => $m->url()]
                     : ['media_type' => 'STORIES', 'image_url' => $m->url()],
-                default => ['image_url' => $m->url(), 'caption' => $texte],
+                default => ['image_url' => $m->url(), 'caption' => $texte] + $this->collaborateurs($cible),
             };
 
             $conteneur = $this->graphe->appeler("/{$ig}/media", $jeton, $params, 'post')['id'];
@@ -215,9 +217,20 @@ class PublieurInstagram implements Publieur
             'media_type' => 'CAROUSEL',
             'children'   => implode(',', $enfants),
             'caption'    => $cible->texte(),
-        ], 'post')['id'];
+        ] + $this->collaborateurs($cible), 'post')['id'];
 
         return $this->publierSiPret($cible, $parent);
+    }
+
+    /**
+     * Les comptes invités comme collaborateurs (3 au plus) : la publication
+     * apparaît aussi sur leur profil une fois qu'ils acceptent l'invitation.
+     */
+    private function collaborateurs(PostTarget $cible): array
+    {
+        $comptes = array_slice((array) $cible->option('collaborateurs', []), 0, 3);
+
+        return $comptes ? ['collaborators' => json_encode(array_values($comptes))] : [];
     }
 
     private function compte(PostTarget $cible): string

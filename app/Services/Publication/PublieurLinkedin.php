@@ -8,6 +8,7 @@ use App\Services\Connexion\FournisseurLinkedin;
 use App\Services\Connexion\FournisseurLinkedinProfil;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Publication sur LinkedIn par l'API Posts : Page entreprise (« linkedin ») ou
@@ -117,7 +118,7 @@ class PublieurLinkedin implements Publieur
             if ($medias->first()?->isVideo()) {
                 // Le traitement de la vidéo prend de quelques secondes à
                 // plusieurs minutes : la publication part dans poursuivre().
-                return Etape::enCours($this->deposerVideo($jeton, $auteur, $medias->first()));
+                return Etape::enCours($this->deposerVideo($jeton, $auteur, $medias->first(), $cible->post->cover));
             }
 
             $images = $medias->map(fn (MediaAsset $m) => $this->deposerImage($jeton, $auteur, $m))->all();
@@ -231,7 +232,7 @@ class PublieurLinkedin implements Publieur
      * Dépose une vidéo en plusieurs parties, dans l'ordre que LinkedIn fixe
      * (environ 4 Mo chacune), puis la finalise. Retourne son URN.
      */
-    private function deposerVideo(string $jeton, string $auteur, MediaAsset $video): string
+    private function deposerVideo(string $jeton, string $auteur, MediaAsset $video, ?MediaAsset $miniature = null): string
     {
         $fichier = $video->fichierLocal();
         $taille  = filesize($fichier);
@@ -240,7 +241,7 @@ class PublieurLinkedin implements Publieur
             'owner'           => $auteur,
             'fileSizeBytes'   => $taille,
             'uploadCaptions'  => false,
-            'uploadThumbnail' => false,
+            'uploadThumbnail' => (bool) $miniature,
         ]], ['action' => 'initializeUpload']);
 
         $urn          = $init->json('value.video') ?? throw new ErreurReseau('LinkedIn n’a pas fourni d’identifiant pour la vidéo.');
@@ -273,6 +274,22 @@ class PublieurLinkedin implements Publieur
             }
         } finally {
             fclose($flux);
+        }
+
+        // La miniature : un refus ne doit pas faire échouer la vidéo.
+        if ($miniature && ($url = $init->json('value.thumbnailUploadUrl'))) {
+            try {
+                $envoi = Http::timeout(60)
+                    ->withHeaders(['media-type-family' => 'STILLIMAGE'])
+                    ->withBody(file_get_contents($miniature->fichierLocal()), 'application/octet-stream')
+                    ->put($url);
+
+                if ($envoi->failed()) {
+                    Log::warning("Miniature LinkedIn refusée pour {$urn} (HTTP {$envoi->status()}).");
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Miniature LinkedIn non envoyée pour {$urn} : " . $e->getMessage());
+            }
         }
 
         $this->api->appeler($jeton, 'post', '/videos', ['finalizeUploadRequest' => [

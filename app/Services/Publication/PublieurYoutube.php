@@ -7,6 +7,7 @@ use App\Services\Connexion\FournisseurGoogle;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Publication sur YouTube (Short ou vidéo) par l'envoi « resumable » de la
@@ -164,6 +165,8 @@ class PublieurYoutube implements Publieur
                 . '. Vérifiez dans YouTube Studio qu’elle n’est pas arrivée avant de relancer.');
         }
 
+        $this->miniature($integration, $id, $cible);
+
         return Etape::publiee($id, $cible->format === 'short'
             ? "https://www.youtube.com/shorts/{$id}"
             : "https://www.youtube.com/watch?v={$id}");
@@ -206,6 +209,34 @@ class PublieurYoutube implements Publieur
                 'containsSyntheticMedia'  => (bool) $cible->option('ia', false),
             ],
         ];
+    }
+
+    /**
+     * La miniature choisie, une fois la vidéo en ligne. Un échec ici (chaîne
+     * non vérifiée, image refusée) ne change rien au fait que la vidéo est
+     * publiée : on le note, sans faire échouer la cible.
+     */
+    private function miniature($integration, string $videoId, PostTarget $cible): void
+    {
+        $image = $cible->post->cover;
+
+        if (! $image) {
+            return;
+        }
+
+        try {
+            $reponse = Http::timeout(120)
+                ->withToken($integration->access_token)
+                ->withBody(file_get_contents($image->fichierLocal()), $image->mime)
+                ->withQueryParameters(['videoId' => $videoId, 'uploadType' => 'media'])
+                ->post('https://www.googleapis.com/upload/youtube/v3/thumbnails/set');
+
+            if ($reponse->failed()) {
+                Log::warning("Miniature YouTube refusée pour {$videoId} : " . $this->motif($reponse));
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Miniature YouTube non envoyée pour {$videoId} : " . $e->getMessage());
+        }
     }
 
     /** Refus à l'ouverture de la session : rien n'a été envoyé. */

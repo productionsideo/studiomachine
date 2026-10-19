@@ -221,6 +221,7 @@ class PostController extends Controller
             'link_url'     => ['nullable', 'url', 'max:500'],
             'media_ids'    => ['array', 'max:10'],
             'media_ids.*'  => [Rule::exists('media_assets', 'id')->where('client_id', $client->id)],
+            'cover_media_id' => ['nullable', Rule::exists('media_assets', 'id')->where('client_id', $client->id)->where('kind', 'image')],
             'jour'         => ['nullable', 'date_format:Y-m-d', 'required_if:action,programmer'],
             'heure'        => ['nullable', 'date_format:H:i', 'required_if:action,programmer'],
             'reseaux'      => ['array'],
@@ -259,6 +260,7 @@ class PostController extends Controller
                 'title'        => $d['title'] ?? null,
                 'caption'      => $d['caption'] ?? null,
                 'link_url'     => $d['link_url'] ?? null,
+                'cover_media_id' => $d['cover_media_id'] ?? null,
                 'scheduled_at' => $quand,
                 'status'       => 'brouillon',     // promu plus bas, une fois vérifié
             ])->save();
@@ -291,8 +293,13 @@ class PostController extends Controller
         }
 
         // Les vérifications de chaque réseau, avant de rien promettre.
-        $post->load('targets.integration', 'media', 'campaign');
+        $post->load('targets.integration', 'media', 'campaign', 'fichiersAttendus');
         $problemes = [];
+
+        if ($post->fichiersAttendus->isNotEmpty()) {
+            $problemes['reseaux'][] = 'En attente de fichier : ' . $post->fichiersAttendus->pluck('nom')->implode(', ')
+                . '. Déposez-le dans la Médiathèque sous ce nom, puis programmez.';
+        }
 
         foreach ($post->targets as $cible) {
             $cible->setRelation('post', $post);
@@ -333,6 +340,13 @@ class PostController extends Controller
                 'confidentialite' => in_array($o['confidentialite'] ?? '', ['public', 'unlisted', 'private'], true) ? $o['confidentialite'] : 'public',
                 'ia'              => $oui('ia'),
             ],
+            'instagram' => array_filter([
+                // Jusqu'à 3 comptes invités (images, carrousels, Reels ; pas les stories).
+                'collaborateurs' => array_slice(array_values(array_unique(array_filter(array_map(
+                    fn ($c) => ltrim(trim($c), '@'),
+                    preg_split('/[\s,;]+/', is_array($o['collaborateurs'] ?? null) ? implode(' ', $o['collaborateurs']) : (string) ($o['collaborateurs'] ?? '')),
+                )))), 0, 3),
+            ]),
             'tiktok' => [
                 'confidentialite'    => in_array($o['confidentialite'] ?? '', ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'], true) ? $o['confidentialite'] : null,
                 'commentaires'       => $oui('commentaires'),
