@@ -101,4 +101,12 @@ class CalendrierTest extends TestCase
             ->assertOk()
             ->assertSee('data-post="' . $this->post->id . '"', false);
     }
+
+    public function test_les_assets_portent_leur_empreinte_meme_a_la_connexion(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('assets/logo-sm.svg?v=', false)
+            ->assertSee('assets/dashboard.css?v=', false);
+    }
 }
