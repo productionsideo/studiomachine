@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('titre', 'Gestion') — Studio Machine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap">
     <link rel="stylesheet" href="{{ $asset('assets/dashboard.css') }}">
     <link rel="icon" href="{{ $asset('assets/favicon.svg') }}" type="image/svg+xml">
     <link rel="icon" href="{{ $asset('assets/favicon-32.png') }}" sizes="32x32" type="image/png">
