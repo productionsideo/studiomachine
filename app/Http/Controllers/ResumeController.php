@@ -82,9 +82,10 @@ class ResumeController extends Controller
                 ? $this->ecarts($liste, $ligne, 'vues_cumulees')
                 : $liste->mapWithKeys(fn ($d) => [$d => $ligne[$d]->vues ?? null])->all();
             $vues[$c->platform]     = $parJour($dates);
-            // Rien de connu sur la période précédente = pas de tendance (et non « +100 % »).
+            // Une période précédente mal couverte ne donne pas de tendance : comparer
+            // 30 jours à 1 seul jour connu afficherait « +55 000 % ».
             $connusPrec = array_filter($parJour($datesPrec), fn ($v) => $v !== null);
-            $vuesPrec[$c->platform] = $connusPrec ? array_sum($connusPrec) : null;
+            $vuesPrec[$c->platform] = count($connusPrec) >= 0.8 * $jours ? array_sum($connusPrec) : null;
         }
 
         // --- Publications : sur la période et la précédente (pour la tendance) --

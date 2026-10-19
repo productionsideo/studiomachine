@@ -145,4 +145,21 @@ class ResumeTest extends TestCase
         $this->assertStringContainsString('Règle 1', $csv);
         $this->assertStringContainsString('Short', $csv);
     }
+
+    public function test_pas_de_tendance_des_vues_quand_la_periode_precedente_est_a_peine_connue(): void
+    {
+        $fb = Integration::where('platform', 'facebook')->first();
+        $fuseau = config('publication.fuseau');
+        // 30 jours connus + 1 seul jour de la période précédente.
+        for ($j = 0; $j <= 30; $j++) {
+            DB::table('stats_comptes')->insert(['integration_id' => $fb->id, 'client_id' => $this->client->id, 'platform' => 'facebook',
+                'jour' => now($fuseau)->subDays($j)->toDateString(), 'abonnes' => 100, 'vues' => 1000, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $admin = User::create(['name' => 'Équipe', 'email' => 'a@essai.test', 'password' => 'x', 'role' => 'admin']);
+        $this->actingAs($admin)->get(route('resume.index', ['client' => 'bj21', 'jours' => 30]))
+            ->assertOk()
+            ->assertSee('30,0 k')
+            ->assertDontSee('%)', false);   // ni pour les vues, ni pour les abonnés stables
+    }
 }
