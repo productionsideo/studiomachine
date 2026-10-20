@@ -378,6 +378,36 @@ class Mediatheque
         return $n;
     }
 
+    /**
+     * PNG ou WebP → JPEG, avec GD plutôt que ffmpeg : lancé depuis une page
+     * web, ffmpeg se bloque sur le serveur (comme ffprobe).
+     */
+    private function versJpeg(string $source): string
+    {
+        $image = @imagecreatefromstring((string) file_get_contents($source));
+
+        if (! $image) {
+            throw new \RuntimeException('Conversion de l’image en JPEG impossible : image illisible.');
+        }
+
+        // Fond blanc sous la transparence, plutôt que le noir par défaut.
+        $largeur = imagesx($image);
+        $hauteur = imagesy($image);
+        $fond    = imagecreatetruecolor($largeur, $hauteur);
+        imagefill($fond, 0, 0, imagecolorallocate($fond, 255, 255, 255));
+        imagecopy($fond, $image, 0, 0, 0, 0, $largeur, $hauteur);
+
+        $cible = $source . '.jpg';
+
+        if (! imagejpeg($fond, $cible, 92) || ! is_file($cible)) {
+            throw new \RuntimeException('Conversion de l’image en JPEG impossible.');
+        }
+
+        @unlink($source);
+
+        return $cible;
+    }
+
     private function mesurerImage(string $chemin): array
     {
         $taille = @getimagesize($chemin);
