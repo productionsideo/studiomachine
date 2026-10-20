@@ -5,7 +5,8 @@
 - App OAuth **en production** (n'importe quel compte Google peut se connecter, avec l'écran « application non validée » ; plus d'expiration 7 jours).
 - Domaine studiomachine.ca validé dans Search Console (TXT `google-site-verification` chez Cloudflare — ne pas le supprimer).
 - Branding **validé et publié**.
-- Reste : justification des accès + vidéo de démonstration (Google n'enregistre pas l'une sans l'autre), puis soumission dans Centre de validation → Prepare for verification.
+- **Demande de validation envoyée le 2026-10-19** (justification ci-dessous + vidéo https://youtu.be/roFmlH3MJXc, non répertoriée sur la chaîne Productions IDEO). État : « en cours d'examen » dans Centre de validation ; réponses de Google par courriel à info@studiomachine.ca / brunochasse@gmail.com.
+- Vidéo test publiée pendant la démo : https://www.youtube.com/watch?v=UGmnLkv24qo (privée) — à garder jusqu'à la réponse de Google.
 - Ensuite, séparément : audit YouTube API Services (sinon vidéos envoyées par l'API forcées en privé).
 
 ## Justification (Accès aux données → « Comment seront utilisés ces niveaux d'accès ? », 922/1000)
