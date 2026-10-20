@@ -118,10 +118,13 @@ class VueEnsemble
     public function clients(Carbon $depuis): Collection
     {
         $events = DB::table('events')->where('created_at', '>=', $depuis)
-            ->selectRaw("client_id,
-                COUNT(DISTINCT CASE WHEN type = 'pageview' THEN session_id END) as visites,
-                COUNT(DISTINCT CASE WHEN type = 'submit' THEN session_id END) as demandes")
+            ->selectRaw("client_id, COUNT(DISTINCT CASE WHEN type = 'pageview' THEN session_id END) as visites")
             ->groupBy('client_id')->get()->keyBy('client_id');
+
+        // Les demandes viennent de la table, comme l'onglet Demandes : les ventes
+        // (BJ21) y arrivent sans événement « submit » du script de suivi.
+        $demandes = DB::table('leads')->where('submitted_at', '>=', $depuis)
+            ->selectRaw('client_id, count(*) n')->groupBy('client_id')->pluck('n', 'client_id');
 
         $publiees = DB::table('posts')->where('status', 'publiee')->where('scheduled_at', '>=', $depuis)
             ->selectRaw('client_id, count(*) n')->groupBy('client_id')->pluck('n', 'client_id');
@@ -135,7 +138,7 @@ class VueEnsemble
             ->map(fn (Client $c) => [
                 'client'    => $c,
                 'visites'   => (int) ($events[$c->id]->visites ?? 0),
-                'demandes'  => (int) ($events[$c->id]->demandes ?? 0),
+                'demandes'  => (int) ($demandes[$c->id] ?? 0),
                 'publiees'  => (int) ($publiees[$c->id] ?? 0),
                 'a_venir'   => (int) ($aVenir[$c->id] ?? 0),
                 'reseaux'   => $c->integrations->pluck('platform')->reject(fn ($p) => $p === 'ga4')->values()->all(),
