@@ -151,6 +151,16 @@ class IntegrationController extends Controller
     {
         $this->authorizeClient($request, $integration->client_id);
 
+        // YouTube : l'accès est aussi révoqué chez Google (règles des services
+        // d'API YouTube). Un échec ne bloque pas la déconnexion chez nous.
+        if ($integration->platform === 'youtube' && ($jeton = $integration->refresh_token ?: $integration->access_token)) {
+            try {
+                \Illuminate\Support\Facades\Http::timeout(10)->asForm()
+                    ->post('https://oauth2.googleapis.com/revoke', ['token' => $jeton]);
+            } catch (\Throwable) {
+            }
+        }
+
         $integration->delete();
 
         return back()->with('ok', 'Compte déconnecté.');

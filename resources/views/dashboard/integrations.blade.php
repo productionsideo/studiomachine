@@ -169,6 +169,18 @@
                         </div>
                     @endif
                 @endif
+
+                {{-- Mentions exigées par les règles des services d'API YouTube. --}}
+                @if($cle === 'youtube')
+                    <div style="font-size:12px;color:var(--encre-3);margin-top:12px">
+                        Studio Machine utilise les services d’API YouTube. En connectant une chaîne, vous acceptez les
+                        <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">conditions d’utilisation de YouTube</a>
+                        ; voir aussi les <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">règles de confidentialité de Google</a>
+                        et notre <a href="https://studiomachine.ca/fr/confidentialite/" target="_blank" rel="noopener">politique de confidentialité</a>.
+                        « Déconnecter » révoque l’accès auprès de Google ; vous pouvez aussi le retirer en tout temps dans
+                        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">les paramètres de sécurité de votre compte Google</a>.
+                    </div>
+                @endif
             </div>
         </div>
     </div>
