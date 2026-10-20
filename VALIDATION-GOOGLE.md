@@ -7,7 +7,8 @@
 - Branding **validé et publié**.
 - **Demande de validation envoyée le 2026-10-19** (justification ci-dessous + vidéo https://youtu.be/roFmlH3MJXc, non répertoriée sur la chaîne Productions IDEO). État : « en cours d'examen » dans Centre de validation ; réponses de Google par courriel à info@studiomachine.ca / brunochasse@gmail.com.
 - Vidéo test publiée pendant la démo : https://www.youtube.com/watch?v=UGmnLkv24qo (privée) — à garder jusqu'à la réponse de Google.
-- Ensuite, séparément : audit YouTube API Services (sinon vidéos envoyées par l'API forcées en privé).
+- **Audit YouTube API Services envoyé le 2026-10-19** (formulaire yt_api_form ; projet 379016184494 ; quota par défaut + videos.insert 16 000 u/j ; accord conservation des stats 36 mois ; compte examinateur google-review@studiomachine.ca, rôle Client sur Productions IDEO). Preuves et diagrammes : ~/Desktop/demo-google/preuves-audit/. Réponse par courriel à info@studiomachine.ca (souvent plusieurs semaines). Tant que l'audit n'est pas accepté, les vidéos envoyées par l'API restent privées.
+- Point faible connu : à la déconnexion, le jeton est révoqué chez Google mais les statistiques déjà collectées restent ; à supprimer si l'audit le reproche.
 
 ## Justification (Accès aux données → « Comment seront utilisés ces niveaux d'accès ? », 922/1000)
 
