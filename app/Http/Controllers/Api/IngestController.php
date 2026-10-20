@@ -122,6 +122,7 @@ class IngestController extends Controller
             'produit'      => ['nullable', 'string', 'max:255'],
             'montant'      => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'devise'       => ['nullable', 'string', 'size:3'],
+            'rembourse'    => ['nullable', 'boolean'],
             'utm_source'   => ['nullable', 'string', 'max:100'],
             'utm_medium'   => ['nullable', 'string', 'max:100'],
             'utm_campaign' => ['nullable', 'string', 'max:100'],
@@ -177,6 +178,11 @@ class IngestController extends Controller
         // la création — un renvoi ne doit pas écraser le suivi fait depuis.
         if ($lead->wasRecentlyCreated && $lead->montant !== null) {
             $lead->update(['status' => 'gagne']);
+        }
+
+        // Un remboursement, lui, l'emporte toujours : la vente n'en est plus une.
+        if (! empty($data['rembourse']) && ! $lead->rembourse_at) {
+            $lead->update(['status' => 'perdu', 'rembourse_at' => now()]);
         }
 
         return response()->json([

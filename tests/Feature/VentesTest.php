@@ -46,10 +46,16 @@ class VentesTest extends TestCase
         $this->assertSame(1, Lead::count());
         $this->assertSame('perdu', $lead->fresh()->status);
 
+        // Remboursement : la vente sort du total.
+        $this->postJson('/api/v1/leads', $vente + ['rembourse' => true], ['X-API-Key' => $cle])->assertOk();
+        $this->assertNotNull($lead->fresh()->rembourse_at);
+        $this->assertSame('perdu', $lead->fresh()->status);
+        $this->postJson('/api/v1/leads', ['external_id' => 'commande-1043', 'montant' => '28.73'] + $vente, ['X-API-Key' => $cle])->assertCreated();
+
         $admin = User::create(['name' => 'Équipe', 'email' => 'a@essai.test', 'password' => 'x', 'role' => 'admin']);
         $this->actingAs($admin)->get(route('leads.index', ['client' => 'bj21rules']))
             ->assertOk()
-            ->assertSee('1 vente pour')
+            ->assertSee('1 vente pour')->assertSee('28,73 $')->assertSee('remboursé')
             ->assertSee('Livre numérique')
             ->assertDontSee('Développement');
 

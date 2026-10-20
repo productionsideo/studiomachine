@@ -13,7 +13,7 @@ class Lead extends Model
 
     protected function casts(): array
     {
-        return ['submitted_at' => 'datetime', 'montant' => 'decimal:2'];
+        return ['submitted_at' => 'datetime', 'montant' => 'decimal:2', 'rembourse_at' => 'datetime'];
     }
 
     public function client()  { return $this->belongsTo(Client::class); }

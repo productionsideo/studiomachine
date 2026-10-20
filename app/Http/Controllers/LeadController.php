@@ -24,7 +24,7 @@ class LeadController extends Controller
         // Les colonnes suivent ce que le client envoie : un formulaire de
         // projet (CRD) ou des ventes (BJ21). Inutile d'afficher « Budget »
         // vide sur chaque ligne d'une boutique.
-        $ventes = $this->query($request)->whereNotNull('montant');
+        $ventes = $this->query($request)->whereNotNull('montant')->whereNull('rembourse_at');
 
         return view('dashboard.leads', [
             'leads'      => $leads,

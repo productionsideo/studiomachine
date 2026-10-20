@@ -102,7 +102,7 @@
                     @if($ventes['nombre'])
                         <td style="font-size:13px">
                             @if($l->montant !== null)
-                                <strong>{{ $l->montant_label }}</strong><br>
+                                <strong @if($l->rembourse_at) style="text-decoration:line-through" @endif>{{ $l->montant_label }}</strong>@if($l->rembourse_at) <span style="font-size:12px">remboursé</span>@endif<br>
                                 <span style="color:var(--encre-3)">{{ $l->produit ?: 'Vente' }}</span>
                             @else — @endif
                         </td>

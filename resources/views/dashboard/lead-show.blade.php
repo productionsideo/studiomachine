@@ -29,7 +29,7 @@
             <table>
                 <tbody>
                 <tr><th style="width:170px">Produit</th><td><strong>{{ $lead->produit ?: '—' }}</strong></td></tr>
-                <tr><th>Montant</th><td><strong style="color:var(--accent)">{{ $lead->montant_label }}</strong> <span class="pastille pastille-gagne">Payé</span></td></tr>
+                <tr><th>Montant</th><td><strong style="color:var(--accent)">{{ $lead->montant_label }}</strong> @if($lead->rembourse_at)<span class="pastille pastille-perdu">Remboursé le {{ $lead->rembourse_at->translatedFormat('j M Y') }}</span>@else<span class="pastille pastille-gagne">Payé</span>@endif</td></tr>
                 <tr><th>Commande</th><td>{{ $lead->external_id }}</td></tr>
                 @if($lead->message)
                     <tr><th style="vertical-align:top">Note du client</th><td style="white-space:pre-wrap">{{ $lead->message }}</td></tr>
